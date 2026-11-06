@@ -1,0 +1,424 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Times Garden 歴史の観測記録</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an observation log. Present-state tiles first, then stacked small-multiple timelines sharing one time axis, then the chronicle and the long-run test. Single deliberate dark world (night observatory), same tokens as earlier prototypes. */
+:root{
+  color-scheme:dark;
+  --bg:#0a0d14;--panel:#111621;--line:#232b3b;--grid:#1c2331;--fg:#e4e8f0;--muted:#8c95a8;--faint:#5d667a;
+  --accent:#e9b965;--ocean:#3987e5;--land:#199e70;--temp:#e9b965;--snow:#9fc6ff;--o2:#8fd6a8;--co2:#c9a6ff;
+  --font-display:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:14px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding-block:26px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+h1{font-family:var(--font-display);font-size:clamp(26px,4vw,38px);line-height:1.2;margin:0;text-wrap:balance}
+h2{font-size:11px;font-family:var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
+.lead{margin:0;color:var(--muted);max-width:68ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:2px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted)}
+.tile .v{font-family:var(--font-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3}
+.tile .s{font-size:11px;color:var(--faint);font-family:var(--font-mono)}
+.chartbox{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 14px 10px;display:grid;gap:8px;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.cwrap{position:relative;width:100%}
+#chart{display:block;width:100%;touch-action:pan-y}
+.tip{position:absolute;pointer-events:none;background:rgba(10,13,20,.94);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;min-width:180px;max-width:280px;display:grid;gap:2px}
+.tip b{font-family:var(--font-mono);font-weight:500}
+.tip .ev{color:var(--accent)}
+.cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:10px;min-width:0}
+ol.chron{list-style:none;margin:0;padding:0;display:grid;gap:0;max-height:560px;overflow:auto}
+ol.chron li{display:grid;grid-template-columns:4.5em 5.5em 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--grid);font-size:13px}
+ol.chron .n{font-family:var(--font-mono);color:var(--accent);font-variant-numeric:tabular-nums}
+ol.chron .g{font-family:var(--font-mono);color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+ol.chron li.big .t{font-weight:700}
+.toggle{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td{padding:5px 0;border-bottom:1px solid var(--grid);vertical-align:top}
+td.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:12px}
+.note{color:var(--muted);font-size:12px;margin:0;max-width:84ch}
+.ok{color:var(--o2)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Times Garden · 試作 04 · 生態系の核</div>
+    <h1>歴史の観測記録</h1>
+    <p class="lead">YZRS Times の号が出るたびに、架空の惑星の歴史が2,000万年ずつ進みます。記事の熱さは火山活動に、gem は隕石に、新しいキーワードは突然変異の起きやすさになります。この画面はブラウザで創刊号から全史を計算し直しています。</p>
+  </header>
+
+  <section aria-labelledby="nowH" style="display:grid;gap:10px">
+    <h2 id="nowH">いまの世界</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="chartbox" aria-labelledby="chH">
+    <h2 id="chH">号ごとの推移（横軸は号。上の金色の線は大きな出来事）</h2>
+    <div class="legend" id="legend"></div>
+    <div class="cwrap" id="cwrap"><canvas id="chart" aria-label="気温、CO2、酸素、生き物の量、系統数の推移"></canvas><div class="tip" id="tip" hidden></div></div>
+  </section>
+
+  <div class="cols">
+    <section class="box" aria-labelledby="chrH">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2 id="chrH">年表</h2>
+        <label class="toggle"><input type="checkbox" id="showMinor"> 小さな隕石と超大陸も表示</label></div>
+      <ol class="chron" id="chron"></ol>
+    </section>
+    <section class="box" aria-labelledby="soakH">
+      <h2 id="soakH">長期運転テスト</h2>
+      <p class="note" id="soakNote"></p>
+      <table id="soak"></table>
+      <h2 style="margin-top:8px">決定論の確認</h2>
+      <p class="note" id="det"></p>
+    </section>
+  </div>
+  <p class="note">試作です。気候と生命のルールは現実の研究をもとにした単純化で、数値の多くはゲームとしての調整値です（constants.mjs に出典と状態を記載）。</p>
+</div>
+
+<script>
+// 調整用の定数。各値に意味、単位、出典、状態（合意 / 論争 / 思弁）を付ける。
+// 状態「思弁」はゲームとしての調整値で、現実の値ではない。
+const CONSTANTS = {
+  myrPerIssue:      { v: 20,      unit: '百万年/号',  note: '1号あたりの時間。238号で約48億年', src: 'ゲーム設計', status: '思弁' },
+  substeps:         { v: 20,      unit: '回/号',      note: '1号の中の計算回数（1回=100万年）', src: 'ゲーム設計', status: '思弁' },
+  T0:               { v: 255,     unit: 'K',          note: '地球の有効放射温度（L=1, A=0.3）', src: '教科書値（エネルギー収支）', status: '合意' },
+  greenhouse0:      { v: 33,      unit: '℃',          note: 'CO2 280ppm での温室効果', src: '教科書値', status: '合意' },
+  climateSens:      { v: 3,       unit: '℃/倍増',     note: 'CO2 倍増あたりの昇温', src: 'IPCC の中央値付近', status: '論争（幅 2.5〜4）' },
+  co2Ref:           { v: 280,     unit: 'ppm',        note: '基準 CO2', src: '産業革命前の値', status: '合意' },
+  sunL0:            { v: 0.70,    unit: '現在比',     note: '誕生時の太陽型恒星の明るさ（暗い太陽）', src: 'レポート: 約70%', status: '合意' },
+  sunBrighten:      { v: 0.075,   unit: '/10億年',    note: '太陽型恒星の増光率', src: 'レポート: 7〜10%/10億年', status: '合意' },
+  snowballEnter:    { v: -12,     unit: '℃',          note: 'これを下回ると全球凍結', src: 'ゲーム調整（アイスアルベドの暴走）', status: '思弁' },
+  snowballAlbedo:   { v: 0.62,    unit: '',           note: '全球凍結中のアルベド', src: '氷の反射率から', status: '思弁' },
+  weatherT:         { v: 0.07,    unit: '/℃',         note: '風化の温度感度（線形近似）', src: 'Walker 1981 の考え方', status: '論争（強さは不確か）' },
+  volcano0:         { v: 1,       unit: '相対',       note: '現在の火山 CO2 放出', src: '基準化', status: '思弁' },
+  ch4Warm:          { v: 12,      unit: '℃',          note: '酸素がない時代のメタン温室', src: '暗い太陽のパラドックスの解の一つ', status: '論争' },
+  o2Reservoir:      { v: 1.4,     unit: 'PAL 相当',   note: '酸素を吸い込む還元物質（鉄など）の初期量', src: 'ゲーム調整（大酸化イベントの時期）', status: '思弁' },
+  o2Prod:           { v: 0.0032,  unit: 'PAL/百万年', note: '光合成生物が満ちたときの酸素生産', src: 'ゲーム調整', status: '思弁' },
+  o2Decay:          { v: 0.004,   unit: '/百万年',    note: '酸化的風化などによる酸素の消費', src: 'ゲーム調整', status: '思弁' },
+  needO2:           { v: [0, 0, 0.01, 0.05, 0.12, 0.3], unit: 'PAL', note: '複雑さ1〜5に必要な酸素', src: 'レポート: 酸素の段階で大型動物が解禁', status: '論争（閾値は不確か）' },
+  daisyK:           { v: 0.003265, unit: '/℃²',       note: '成長率の温度依存（最適温度から外れると下がる）', src: 'Watson & Lovelock 1983', status: '合意（モデルとして）' },
+  deathRate:        { v: 0.075,   unit: '/百万年',    note: '基礎死亡率', src: 'Daisyworld の γ を時間刻みに合わせて調整', status: '思弁' },
+  speciation:       { v: 0.03,    unit: '/百万年',    note: '個体数1あたりの分岐確率', src: 'ゲーム調整', status: '思弁' },
+  abiogenesis:      { v: 0.004,   unit: '/百万年',    note: '条件が揃ったときの生命誕生確率', src: 'ゲーム調整（数億年で誕生）', status: '思弁' },
+  impactBase:       { v: 0.02,    unit: '/号',        note: '大きな隕石の基礎確率', src: 'レポート: 10km 級は約1億年に1回', status: '合意（桁）' },
+  impactPerGem:     { v: 0.07,    unit: '/号/gem',    note: 'gem 記事1本あたりの上乗せ', src: 'ゲーム設計', status: '思弁' },
+  lipHot:           { v: 82,      unit: '記事温度',   note: 'この平均温度を超える号で洪水玄武岩が起きうる', src: 'ゲーム設計', status: '思弁' },
+  superPeriod:      { v: 20,      unit: '号',         note: '超大陸サイクル（4億年）', src: 'レポート: 3〜5億年', status: '合意' },
+  maxSpecies:       { v: 48,      unit: '系統',       note: '同時に追う系統の上限', src: '計算量の都合', status: '思弁' },
+};
+const C = Object.fromEntries(Object.entries(CONSTANTS).map(([k, o]) => [k, o.v]));
+
+// Times Garden 生態系の核（試作 04）
+// 決定論: 乱数は種からだけ作る。計算は四則演算と Math.sqrt だけ（Math.sin/cos/exp/pow/log は使わない）。
+
+
+const SIM_VERSION = 'eco-0.1';
+
+/* ---------- 乱数 ---------- */
+function cyrb128(str) {
+  let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+  for (let i = 0, k; i < str.length; i++) {
+    k = str.charCodeAt(i);
+    h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213); h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  h1 ^= (h2 ^ h3 ^ h4); h2 ^= h1; h3 ^= h1; h4 ^= h1;
+  return [h1 >>> 0, h2 >>> 0, h3 >>> 0, h4 >>> 0];
+}
+function sfc32(a, b, c, d) {
+  return function () {
+    a >>>= 0; b >>>= 0; c >>>= 0; d >>>= 0;
+    let t = (a + b) | 0; a = b ^ (b >>> 9); b = (c + (c << 3)) | 0; c = (c << 21 | c >>> 11);
+    d = (d + 1) | 0; t = (t + d) | 0; c = (c + t) | 0; return (t >>> 0) / 4294967296;
+  };
+}
+function rng(...parts) { const f = sfc32(...cyrb128(parts.join('|'))); for (let i = 0; i < 12; i++) f(); return f; }
+const gauss = r => (r() + r() + r() + r() - 2) * 0.866; // 平均0、分散おおよそ1
+
+/* ---------- 決定論の数学 ---------- */
+const LN2 = 0.6931471805599453;
+function ln(x) {
+  if (!(x > 0)) return -1e9;
+  let k = 0; while (x > 2) { x /= 2; k++; } while (x < 1) { x *= 2; k--; }
+  const y = (x - 1) / (x + 1), y2 = y * y; let s = y, t = y;
+  for (let n = 3; n <= 17; n += 2) { t *= y2; s += t / n; }
+  return 2 * s + k * LN2;
+}
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const qrt = x => Math.sqrt(Math.sqrt(x));
+const r4 = v => Math.round(v * 1e4) / 1e4;
+
+/* ---------- 世界の初期化 ---------- */
+function initWorld(seed) {
+  const r = rng('world', seed);
+  const starRoll = r();
+  const star = starRoll < 0.2 ? 'red' : starRoll < 0.85 ? 'yellow' : 'blue';
+  const L0 = star === 'red' ? 0.82 + r() * 0.1 : star === 'yellow' ? C.sunL0 + (r() - 0.5) * 0.06 : 0.78 + r() * 0.06;
+  const brighten = star === 'red' ? 0.004 : star === 'yellow' ? C.sunBrighten : 0.16;
+  return {
+    seed, star, L0, brighten, t: 0, issueNo: 0,
+    CO2: 60000, O2: 0, R: C.o2Reservoir, ocean: 1, land: 0.12 + r() * 0.06, superPhase: r() * C.superPeriod,
+    T: 0, snowball: false, dust: 0, lip: 0, life: false, species: [], nextId: 1,
+    flags: {}, extinct: 0, history: [],
+  };
+}
+
+/* ---------- 気候 ---------- */
+function lum(W) { return W.L0 * (1 + W.brighten * W.t / 1000) * (1 - W.dust); }
+function lifeAlbedo(W) {
+  let a = 0; for (const s of W.species) a += s.pop * s.alb; return clamp(a * 0.25, -0.08, 0.08);
+}
+function ghCH4(W) { return W.life ? C.ch4Warm * (1 - clamp(W.O2 / 0.01, 0, 1)) : 0; }
+function tempFor(W, co2, snow) {
+  const L = lum(W), la = lifeAlbedo(W);
+  const gh = C.greenhouse0 + C.climateSens * ln(Math.max(co2, 10) / C.co2Ref) / LN2 + ghCH4(W);
+  if (snow) return C.T0 * qrt(L * (1 - C.snowballAlbedo) / 0.7) - 273.15 + gh;
+  let T = W.T || 10;
+  for (let i = 0; i < 4; i++) {
+    const ice = clamp((10 - T) / 40, 0.02, 0.6);
+    const A = clamp(0.28 + ice * 0.35 + la, 0.1, 0.7);
+    let Tn = C.T0 * qrt(L * (1 - A) / 0.7) - 273.15 + gh;
+    if (Tn > 60) Tn += (Tn - 60) * 0.5; // 水蒸気のフィードバック
+    T = (T + Tn) / 2 + (Tn - T) / 2;
+  }
+  return T;
+}
+function volcanism(W, mod) {
+  return C.volcano0 * clamp(3 - 2 * W.t / 4570, 0.6, 3) * mod + W.lip;
+}
+function weathering(W, co2, T) {
+  const wT = clamp(1 + C.weatherT * (T - 15), 0.05, 4);
+  const sup = superFactor(W);
+  let plants = 0; for (const s of W.species) if (s.hab === 'land') plants += s.pop;
+  return Math.sqrt(co2 / C.co2Ref) * wT * (W.land / 0.3) * sup * (1 + plants * 1.5) * W.ocean;
+}
+function superFactor(W) { const p = (W.superPhase % C.superPeriod) / C.superPeriod; return p < 0.25 ? 0.7 : 1; }
+function solveCO2(W, V) {
+  let lo = 10, hi = 2e6;
+  for (let i = 0; i < 40; i++) {
+    const mid = Math.sqrt(lo * hi), T = tempFor(W, mid, false);
+    if (V - weathering(W, mid, T) > 0) lo = mid; else hi = mid;
+  }
+  return Math.sqrt(lo * hi);
+}
+
+/* ---------- 生命 ---------- */
+function habitatT(W, hab) { return hab === 'ocean' ? W.T * 0.8 + 3 : W.T; }
+function beta(s, T) { const d = (T - s.topt) * (25 / s.tol); return 1 - C.daisyK * d * d; }
+function capacity(W, hab) {
+  if (W.snowball) return hab === 'ocean' ? 0.08 : 0;
+  const ice = clamp((10 - W.T) / 40, 0.02, 0.6);
+  if (hab === 'ocean') return W.ocean * (1 - ice) * (W.T > 0 && W.T < 95 ? 1 : 0);
+  return W.O2 >= 0.1 ? W.land / 0.3 * (1 - ice) * (W.T > -5 && W.T < 50 ? 1 : 0) : 0;
+}
+function lifeStep(W, r, innov, ev) {
+  const sum = { ocean: 0, land: 0 }; for (const s of W.species) sum[s.hab] += s.pop;
+  const K = { ocean: capacity(W, 'ocean'), land: capacity(W, 'land') };
+  const born = [];
+  for (const s of W.species) {
+    const T = habitatT(W, s.hab); let b = beta(s, T) * 0.5 * (s.photo || s.hab === 'land' ? 1.6 : 1);
+    if (!s.aerobe && W.O2 > 0.05) b -= 0.4 * W.O2;
+    const need = C.needO2[s.cx]; if (need > 0 && W.O2 < need) b *= W.O2 / need;
+    const k = K[s.hab] > 0 ? 1 - sum[s.hab] / K[s.hab] : -1;
+    s.pop = clamp(s.pop + s.pop * ((b > 0 ? b * k : b) - C.deathRate), 0, 1);
+    // 分岐と革新
+    if (s.pop > 0.01 && r() < C.speciation * s.pop * innov * 6) {
+      const d = { ...s, id: W.nextId++, parent: s.id, born: W.issueNo, pop: s.pop * 0.15,
+        topt: s.topt + gauss(r) * 4, tol: clamp(s.tol + gauss(r) * 3, 8, 40), alb: clamp(s.alb + gauss(r) * 0.06, -0.25, 0.25) };
+      s.pop *= 0.85;
+      if (!d.photo && d.hab === 'ocean' && r() < 0.06) { d.photo = true; if (!W.flags.photo) { W.flags.photo = W.issueNo; ev.push({ k: 'photo', t: '光合成をする生き物が現れた' }); } }
+      if (d.cx < 5 && r() < [0, 0.05, 0.03, 0.03, 0.002][d.cx] && W.O2 >= C.needO2[d.cx + 1] * 0.8) {
+        d.cx++; d.aerobe = d.cx >= 2 || d.aerobe;
+        const name = ['', '', 'euk', 'multi', 'complex', 'mind'][d.cx];
+        if (!W.flags[name]) { W.flags[name] = W.issueNo; ev.push({ k: name, t: { euk: '細胞の中に小部屋を持つ生き物（真核生物）が現れた', multi: '多細胞の生き物が現れた', complex: '大きく複雑な生き物が現れた', mind: '考える生き物が現れた' }[name] }); }
+      }
+      if (d.hab === 'ocean' && d.cx >= 2 && W.O2 >= 0.1 && r() < 0.05) {
+        d.hab = 'land'; d.topt = W.T;
+        if (!W.flags.land) { W.flags.land = W.issueNo; ev.push({ k: 'land', t: '生き物が陸に上がった' }); }
+      }
+      born.push(d);
+    }
+  }
+  W.species.push(...born);
+  const before = W.species.length;
+  W.species = W.species.filter(s => s.pop > 1e-4);
+  W.extinct += before - W.species.length;
+  if (W.species.length > C.maxSpecies) { W.species.sort((a, b) => b.pop - a.pop); W.species.length = C.maxSpecies; }
+  if (W.species.length === 0 && W.life) { W.life = false; ev.push({ k: 'sterile', t: 'すべての生き物が絶滅した' }); }
+}
+function massKill(W, r, lo, hi) {
+  const n0 = W.species.length; if (!n0) return 0;
+  for (const s of W.species) { const k = lo + (hi - lo) * r() * (0.6 + 0.1 * s.cx); s.pop *= clamp(1 - k, 0, 1); if (r() < k * 0.8) s.pop = 0; }
+  W.species = W.species.filter(s => s.pop > 1e-4); W.extinct += n0 - W.species.length;
+  return (n0 - W.species.length) / n0;
+}
+
+/* ---------- 1号ぶんを進める ---------- */
+function stepIssue(W, issue) {
+  const r = rng('issue', W.seed, issue.issueNo, issue.digest);
+  W.issueNo = issue.issueNo; const ev = [];
+  const innov = 1 + Math.min(issue.newKeywords, 40) / 20;
+  const volcMod = 0.7 + 0.6 * clamp(issue.meanTemp / 100, 0, 1);
+  // 記事が起こす事件
+  const pImpact = clamp(C.impactBase + C.impactPerGem * issue.gems, 0, 0.35);
+  let impact = null;
+  if (r() < pImpact) { const s = r(); impact = s < 0.7 ? 'small' : s < 0.95 ? 'large' : 'giant'; }
+  if (issue.meanTemp > C.lipHot && r() < 0.35) { W.lip = 2 + r() * 6; ev.push({ k: 'lip', t: '大規模な火山活動（洪水玄武岩）が始まった' }); }
+  const species0 = W.species.length;
+  for (let k = 0; k < C.substeps; k++) {
+    W.t += C.myrPerIssue / C.substeps;
+    W.superPhase += 1 / C.substeps;
+    if (k === 5 && impact) {
+      const lost = impact === 'small' ? massKill(W, r, 0.02, 0.12) : impact === 'large' ? massKill(W, r, 0.25, 0.6) : massKill(W, r, 0.6, 0.95);
+      W.dust = impact === 'small' ? 0.05 : impact === 'large' ? 0.15 : 0.3;
+      ev.push({ k: 'impact', size: impact, t: { small: '小さな隕石が落ちた', large: '大きな隕石が落ちた', giant: '巨大な隕石が落ちた' }[impact], lost: r4(lost) });
+    }
+    const V = volcanism(W, volcMod);
+    if (W.snowball) {
+      W.CO2 += V * 1500;
+      W.T = tempFor(W, W.CO2, true);
+      if (W.T > 0) { W.snowball = false; ev.push({ k: 'thaw', t: '全球凍結が解けた' }); W.CO2 = Math.min(W.CO2, 2e6); W.T = tempFor(W, W.CO2, false); }
+    } else {
+      const eq = solveCO2(W, V);
+      W.CO2 = Math.sqrt(W.CO2 * Math.sqrt(W.CO2 * eq)); // 釣り合いへ少しずつ近づく（1回で対数距離の4分の1）
+      W.T = tempFor(W, W.CO2, false);
+      if (W.T < C.snowballEnter) { W.snowball = true; ev.push({ k: 'snowball', t: '惑星全体が凍りついた（全球凍結）' }); W.T = tempFor(W, W.CO2, true); }
+    }
+    if (W.T > 70) { W.ocean = Math.max(0, W.ocean - 0.01); if (W.ocean < 0.05 && !W.flags.oceanLost) { W.flags.oceanLost = W.issueNo; ev.push({ k: 'oceanLost', t: '海が蒸発して失われた' }); } }
+    // 酸素
+    let photo = 0; for (const s of W.species) if (s.photo || s.hab === 'land') photo += s.pop;
+    const prod = C.o2Prod * photo, reduce = 0.00015 * V;
+    W.R += reduce; const use = Math.min(W.R, prod); W.R -= use;
+    const before = W.O2; W.O2 = clamp(W.O2 + (prod - use) - C.o2Decay * W.O2, 0, 1.6);
+    if (before < 0.01 && W.O2 >= 0.01 && !W.flags.goe) { W.flags.goe = W.issueNo; ev.push({ k: 'goe', t: '大気に酸素がたまり始めた（大酸化イベント）' }); }
+    // 生命の誕生と営み
+    if (!W.life && !W.flags.oceanLost && !W.snowball && W.T > 0 && W.T < 90 && W.t > 100 && r() < C.abiogenesis * innov) {
+      W.life = true; W.species.push({ id: W.nextId++, parent: 0, born: W.issueNo, cx: 1, hab: 'ocean', topt: W.T * 0.8 + 3, tol: 25, alb: 0, photo: false, aerobe: false, pop: 0.01 });
+      if (!W.flags.abio) { W.flags.abio = W.issueNo; ev.push({ k: 'abio', t: '海で最初の生命が生まれた' }); } else ev.push({ k: 'abio2', t: '生命がふたたび生まれた' });
+    }
+    if (W.life) lifeStep(W, r, innov, ev);
+    W.dust *= 0.6; W.lip *= 0.85;
+  }
+  // 超大陸
+  const ph = W.superPhase % C.superPeriod;
+  if (ph < 1 && !W._superAnn) { W._superAnn = true; ev.push({ k: 'super', t: '大陸が集まって超大陸ができた' }); }
+  if (ph >= 1) W._superAnn = false;
+  W.land = clamp(W.land + 0.004 + (r() - 0.5) * 0.004, 0.08, 0.4);
+  const lostFrac = species0 ? (species0 - W.species.filter(s => s.born < W.issueNo).length) / species0 : 0;
+  if (species0 >= 6 && lostFrac >= 0.5) ev.push({ k: 'mass', t: `大量絶滅（系統の${Math.round(lostFrac * 100)}%が消えた）` });
+  const snap = snapshot(W, issue, ev);
+  W.history.push(snap);
+  return snap;
+}
+function snapshot(W, issue, ev) {
+  let ocean = 0, land = 0, maxCx = 0; for (const s of W.species) { if (s.hab === 'ocean') ocean += s.pop; else land += s.pop; maxCx = Math.max(maxCx, s.cx); }
+  const top = W.species.reduce((m, s) => Math.max(m, s.pop), 0), tot = ocean + land;
+  return { issueNo: issue.issueNo, date: issue.date, edition: issue.edition, gyr: r4(W.t / 1000), T: r4(W.T), CO2: Math.round(W.CO2), O2: r4(W.O2), snowball: W.snowball,
+    ocean: r4(W.ocean), land: r4(W.land), nSpecies: W.species.length, bioOcean: r4(ocean), bioLand: r4(land), maxCx, topShare: tot > 0 ? r4(top / tot) : 0, extinctTotal: W.extinct, events: ev };
+}
+
+/* ---------- 全史 ---------- */
+function runHistory(seed, ledger) {
+  const W = initWorld(seed);
+  for (const issue of ledger) stepIssue(W, issue);
+  return { seed, version: SIM_VERSION, star: W.star, flags: W.flags, snapshots: W.history, species: W.species.map(s => ({ ...s, pop: r4(s.pop), topt: r4(s.topt), tol: r4(s.tol), alb: r4(s.alb) })) };
+}
+function historyHash(h) { return cyrb128(JSON.stringify(h)).map(x => x.toString(16).padStart(8, '0')).join(''); }
+
+const LEDGER={"version":1,"source":"yzrswork-site public/data/graph.json","generatedAt":"2026-11-06T02:47:33.177Z","issues":[{"issueNo":1,"id":"i:2026-07-10-morning","date":"2026-07-10","edition":"morning","nArticles":7,"gems":1,"meanTemp":73.4,"newKeywords":16,"categories":{"tech":3,"programming":2,"news":2},"digest":"bc546366"},{"issueNo":2,"id":"i:2026-07-11-midday","date":"2026-07-11","edition":"midday","nArticles":10,"gems":1,"meanTemp":60.4,"newKeywords":24,"categories":{"tech":2,"programming":1,"general":7},"digest":"ddbd7ab7"},{"issueNo":3,"id":"i:2026-07-11-morning","date":"2026-07-11","edition":"morning","nArticles":10,"gems":1,"meanTemp":68.5,"newKeywords":17,"categories":{"programming":2,"tech":3,"news":4,"trends":1},"digest":"809a6708"},{"issueNo":4,"id":"i:2026-07-12-morning","date":"2026-07-12","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.3,"newKeywords":18,"categories":{"trends":1,"programming":3,"news":3,"tech":1,"oss":1},"digest":"605e0a45"},{"issueNo":5,"id":"i:2026-07-12-midday","date":"2026-07-12","edition":"midday","nArticles":12,"gems":1,"meanTemp":62.3,"newKeywords":37,"categories":{"programming":5,"tech":6,"oss":1},"digest":"6620a5f5"},{"issueNo":6,"id":"i:2026-07-13-morning","date":"2026-07-13","edition":"morning","nArticles":10,"gems":1,"meanTemp":63.6,"newKeywords":26,"categories":{"trends":1,"programming":3,"tech":1,"news":4,"oss":1},"digest":"a1c856fe"},{"issueNo":7,"id":"i:2026-07-14-morning","date":"2026-07-14","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.9,"newKeywords":15,"categories":{"trends":1,"programming":3,"tech":1,"news":3,"oss":1},"digest":"391db6d7"},{"issueNo":8,"id":"i:2026-07-14-midday","date":"2026-07-14","edition":"midday","nArticles":8,"gems":1,"meanTemp":58.3,"newKeywords":17,"categories":{"programming":4,"tech":3,"oss":1},"digest":"63fb3b70"},{"issueNo":9,"id":"i:2026-07-15-morning","date":"2026-07-15","edition":"morning","nArticles":8,"gems":1,"meanTemp":68.3,"newKeywords":15,"categories":{"trends":1,"programming":3,"tech":1,"news":2,"oss":1},"digest":"aecb8bce"},{"issueNo":10,"id":"i:2026-07-15-midday","date":"2026-07-15","edition":"midday","nArticles":10,"gems":1,"meanTemp":61.1,"newKeywords":33,"categories":{"programming":4,"tech":5,"oss":1},"digest":"aff916a5"},{"issueNo":11,"id":"i:2026-07-16-morning","date":"2026-07-16","edition":"morning","nArticles":9,"gems":1,"meanTemp":66.8,"newKeywords":19,"categories":{"trends":1,"programming":3,"tech":2,"news":2,"oss":1},"digest":"51ebaac1"},{"issueNo":12,"id":"i:2026-07-16-midday","date":"2026-07-16","edition":"midday","nArticles":12,"gems":1,"meanTemp":58.3,"newKeywords":25,"categories":{"programming":6,"tech":5,"oss":1},"digest":"6d8d5c3"},{"issueNo":13,"id":"i:2026-07-17-morning","date":"2026-07-17","edition":"morning","nArticles":9,"gems":1,"meanTemp":68.2,"newKeywords":17,"categories":{"trends":1,"programming":3,"news":3,"tech":1,"oss":1},"digest":"73bfeb31"},{"issueNo":14,"id":"i:2026-07-17-midday","date":"2026-07-17","edition":"midday","nArticles":10,"gems":1,"meanTemp":59.6,"newKeywords":23,"categories":{"tech":4,"programming":5,"oss":1},"digest":"f57d3bc5"},{"issueNo":15,"id":"i:2026-07-18-morning","date":"2026-07-18","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.8,"newKeywords":27,"categories":{"trends":1,"tech":4,"programming":4,"news":4},"digest":"b3753263"},{"issueNo":16,"id":"i:2026-07-18-midday","date":"2026-07-18","edition":"midday","nArticles":8,"gems":1,"meanTemp":63.3,"newKeywords":11,"categories":{"programming":5,"tech":2,"oss":1},"digest":"7c328d6b"},{"issueNo":17,"id":"i:2026-07-19-morning","date":"2026-07-19","edition":"morning","nArticles":13,"gems":1,"meanTemp":67,"newKeywords":30,"categories":{"trends":1,"programming":4,"news":5,"tech":2,"oss":1},"digest":"1524daf9"},{"issueNo":18,"id":"i:2026-07-19-midday","date":"2026-07-19","edition":"midday","nArticles":13,"gems":1,"meanTemp":64.9,"newKeywords":14,"categories":{"programming":6,"tech":7},"digest":"4f27f394"},{"issueNo":19,"id":"i:2026-07-20-morning","date":"2026-07-20","edition":"morning","nArticles":9,"gems":2,"meanTemp":70.1,"newKeywords":15,"categories":{"trends":1,"programming":2,"tech":3,"news":3},"digest":"fbdd9027"},{"issueNo":20,"id":"i:2026-07-20-midday","date":"2026-07-20","edition":"midday","nArticles":10,"gems":1,"meanTemp":60,"newKeywords":17,"categories":{"tech":4,"programming":5,"oss":1},"digest":"6b49a83"},{"issueNo":21,"id":"i:2026-07-21-morning","date":"2026-07-21","edition":"morning","nArticles":10,"gems":1,"meanTemp":69.5,"newKeywords":15,"categories":{"trends":1,"tech":2,"programming":3,"news":4},"digest":"30512fa6"},{"issueNo":22,"id":"i:2026-07-21-midday","date":"2026-07-21","edition":"midday","nArticles":12,"gems":1,"meanTemp":62.3,"newKeywords":17,"categories":{"tech":6,"programming":6},"digest":"87aad09c"},{"issueNo":23,"id":"i:2026-07-22-morning","date":"2026-07-22","edition":"morning","nArticles":11,"gems":1,"meanTemp":66.7,"newKeywords":17,"categories":{"trends":1,"programming":4,"tech":1,"news":4,"oss":1},"digest":"3a1446f7"},{"issueNo":24,"id":"i:2026-07-22-midday","date":"2026-07-22","edition":"midday","nArticles":10,"gems":1,"meanTemp":57.2,"newKeywords":17,"categories":{"tech":4,"programming":5,"oss":1},"digest":"3743428e"},{"issueNo":25,"id":"i:2026-07-23-morning","date":"2026-07-23","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.7,"newKeywords":17,"categories":{"trends":1,"tech":1,"programming":3,"news":3,"blog":1},"digest":"da8697cf"},{"issueNo":26,"id":"i:2026-07-23-midday","date":"2026-07-23","edition":"midday","nArticles":13,"gems":1,"meanTemp":63.2,"newKeywords":25,"categories":{"programming":7,"tech":5,"oss":1},"digest":"9e26c7b8"},{"issueNo":27,"id":"i:2026-07-24-morning","date":"2026-07-24","edition":"morning","nArticles":12,"gems":1,"meanTemp":71,"newKeywords":20,"categories":{"trends":1,"tech":4,"programming":3,"news":3,"oss":1},"digest":"cc2ccbf1"},{"issueNo":28,"id":"i:2026-07-24-midday","date":"2026-07-24","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.5,"newKeywords":22,"categories":{"tech":5,"programming":5,"oss":1},"digest":"fe7f3656"},{"issueNo":29,"id":"i:2026-07-25-morning","date":"2026-07-25","edition":"morning","nArticles":10,"gems":1,"meanTemp":68.2,"newKeywords":18,"categories":{"trends":1,"programming":2,"news":4,"tech":3},"digest":"2689f0e6"},{"issueNo":30,"id":"i:2026-07-25-midday","date":"2026-07-25","edition":"midday","nArticles":11,"gems":1,"meanTemp":60.2,"newKeywords":19,"categories":{"programming":5,"tech":6},"digest":"a1a669a5"},{"issueNo":31,"id":"i:2026-07-26-morning","date":"2026-07-26","edition":"morning","nArticles":10,"gems":1,"meanTemp":67,"newKeywords":17,"categories":{"trends":1,"tech":3,"programming":2,"news":4},"digest":"ba94cdb9"},{"issueNo":32,"id":"i:2026-07-26-midday","date":"2026-07-26","edition":"midday","nArticles":11,"gems":1,"meanTemp":57.6,"newKeywords":13,"categories":{"programming":5,"tech":6},"digest":"c1b8bd60"},{"issueNo":33,"id":"i:2026-07-27-morning","date":"2026-07-27","edition":"morning","nArticles":13,"gems":1,"meanTemp":67.8,"newKeywords":24,"categories":{"trends":1,"programming":5,"news":4,"tech":3},"digest":"23812544"},{"issueNo":34,"id":"i:2026-07-27-midday","date":"2026-07-27","edition":"midday","nArticles":14,"gems":1,"meanTemp":66.1,"newKeywords":15,"categories":{"programming":8,"tech":6},"digest":"25b41072"},{"issueNo":35,"id":"i:2026-07-28-morning","date":"2026-07-28","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.5,"newKeywords":21,"categories":{"trends":1,"programming":3,"news":4,"tech":1,"oss":1},"digest":"9233facc"},{"issueNo":36,"id":"i:2026-07-28-midday","date":"2026-07-28","edition":"midday","nArticles":10,"gems":1,"meanTemp":57.2,"newKeywords":28,"categories":{"programming":5,"tech":4,"oss":1},"digest":"962da342"},{"issueNo":37,"id":"i:2026-07-29-morning","date":"2026-07-29","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.6,"newKeywords":17,"categories":{"trends":1,"programming":4,"news":3,"oss":1},"digest":"daea20e5"},{"issueNo":38,"id":"i:2026-07-29-midday","date":"2026-07-29","edition":"midday","nArticles":12,"gems":1,"meanTemp":59.3,"newKeywords":40,"categories":{"tech":7,"programming":5},"digest":"8224edfa"},{"issueNo":39,"id":"i:2026-07-30-morning","date":"2026-07-30","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.1,"newKeywords":22,"categories":{"trends":1,"news":3,"programming":3,"tech":3},"digest":"16b493df"},{"issueNo":40,"id":"i:2026-07-30-midday","date":"2026-07-30","edition":"midday","nArticles":13,"gems":1,"meanTemp":64,"newKeywords":22,"categories":{"tech":5,"programming":7,"oss":1},"digest":"817bba36"},{"issueNo":41,"id":"i:2026-07-31-morning","date":"2026-07-31","edition":"morning","nArticles":12,"gems":1,"meanTemp":67.3,"newKeywords":26,"categories":{"trends":1,"programming":4,"tech":2,"news":4,"oss":1},"digest":"87ead241"},{"issueNo":42,"id":"i:2026-07-31-midday","date":"2026-07-31","edition":"midday","nArticles":12,"gems":1,"meanTemp":64.4,"newKeywords":19,"categories":{"programming":7,"tech":4,"oss":1},"digest":"6e3bc006"},{"issueNo":43,"id":"i:2026-08-01-morning","date":"2026-08-01","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.6,"newKeywords":27,"categories":{"trends":1,"news":4,"programming":2,"tech":2,"oss":1},"digest":"ab642016"},{"issueNo":44,"id":"i:2026-08-01-midday","date":"2026-08-01","edition":"midday","nArticles":12,"gems":1,"meanTemp":63,"newKeywords":33,"categories":{"programming":7,"tech":4,"oss":1},"digest":"78b909af"},{"issueNo":45,"id":"i:2026-08-02-morning","date":"2026-08-02","edition":"morning","nArticles":9,"gems":1,"meanTemp":65.4,"newKeywords":20,"categories":{"trends":1,"programming":3,"news":3,"tech":1,"oss":1},"digest":"89cc7a11"},{"issueNo":46,"id":"i:2026-08-02-midday","date":"2026-08-02","edition":"midday","nArticles":9,"gems":1,"meanTemp":64.8,"newKeywords":19,"categories":{"programming":5,"tech":3,"oss":1},"digest":"b766b9de"},{"issueNo":47,"id":"i:2026-08-03-morning","date":"2026-08-03","edition":"morning","nArticles":10,"gems":1,"meanTemp":63.5,"newKeywords":21,"categories":{"trends":1,"programming":2,"tech":2,"news":4,"oss":1},"digest":"c073ed27"},{"issueNo":48,"id":"i:2026-08-03-midday","date":"2026-08-03","edition":"midday","nArticles":12,"gems":1,"meanTemp":64.2,"newKeywords":29,"categories":{"programming":5,"tech":6,"oss":1},"digest":"1325e9e2"},{"issueNo":49,"id":"i:2026-08-04-morning","date":"2026-08-04","edition":"morning","nArticles":12,"gems":1,"meanTemp":71.1,"newKeywords":26,"categories":{"trends":1,"programming":4,"tech":3,"news":3,"oss":1},"digest":"a9bcd819"},{"issueNo":50,"id":"i:2026-08-04-midday","date":"2026-08-04","edition":"midday","nArticles":11,"gems":1,"meanTemp":69.4,"newKeywords":20,"categories":{"tech":6,"programming":5},"digest":"c7d8e46"},{"issueNo":51,"id":"i:2026-08-05-morning","date":"2026-08-05","edition":"morning","nArticles":9,"gems":1,"meanTemp":66.7,"newKeywords":23,"categories":{"trends":1,"tech":2,"programming":2,"news":3,"oss":1},"digest":"b53dcbc6"},{"issueNo":52,"id":"i:2026-08-05-midday","date":"2026-08-05","edition":"midday","nArticles":11,"gems":1,"meanTemp":58.5,"newKeywords":34,"categories":{"programming":6,"tech":4,"oss":1},"digest":"5b6e00df"},{"issueNo":53,"id":"i:2026-08-06-morning","date":"2026-08-06","edition":"morning","nArticles":12,"gems":1,"meanTemp":71.9,"newKeywords":26,"categories":{"trends":1,"programming":4,"tech":3,"news":3,"oss":1},"digest":"f9a5dd9a"},{"issueNo":54,"id":"i:2026-08-06-midday","date":"2026-08-06","edition":"midday","nArticles":13,"gems":1,"meanTemp":62.2,"newKeywords":27,"categories":{"tech":7,"programming":6},"digest":"510a5074"},{"issueNo":55,"id":"i:2026-08-07-morning","date":"2026-08-07","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.1,"newKeywords":22,"categories":{"trends":1,"tech":1,"programming":3,"news":4,"oss":1},"digest":"65a0661e"},{"issueNo":56,"id":"i:2026-08-07-midday","date":"2026-08-07","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.8,"newKeywords":37,"categories":{"tech":5,"programming":6,"oss":1},"digest":"5c2e63e9"},{"issueNo":57,"id":"i:2026-08-08-morning","date":"2026-08-08","edition":"morning","nArticles":9,"gems":1,"meanTemp":65,"newKeywords":23,"categories":{"trends":1,"tech":2,"programming":2,"news":3,"oss":1},"digest":"494a22d2"},{"issueNo":58,"id":"i:2026-08-08-midday","date":"2026-08-08","edition":"midday","nArticles":12,"gems":1,"meanTemp":63.8,"newKeywords":33,"categories":{"programming":7,"tech":4,"oss":1},"digest":"cc61d1ba"},{"issueNo":59,"id":"i:2026-08-09-morning","date":"2026-08-09","edition":"morning","nArticles":9,"gems":1,"meanTemp":65.7,"newKeywords":13,"categories":{"trends":1,"tech":1,"programming":3,"news":3,"oss":1},"digest":"2a5a11fe"},{"issueNo":60,"id":"i:2026-08-09-midday","date":"2026-08-09","edition":"midday","nArticles":13,"gems":1,"meanTemp":64.7,"newKeywords":20,"categories":{"programming":6,"tech":6,"oss":1},"digest":"bd38947f"},{"issueNo":61,"id":"i:2026-08-10-morning","date":"2026-08-10","edition":"morning","nArticles":11,"gems":1,"meanTemp":67.3,"newKeywords":20,"categories":{"trends":1,"programming":2,"tech":3,"news":4,"oss":1},"digest":"b076f4a2"},{"issueNo":62,"id":"i:2026-08-10-midday","date":"2026-08-10","edition":"midday","nArticles":12,"gems":1,"meanTemp":57.8,"newKeywords":21,"categories":{"tech":5,"programming":6,"oss":1},"digest":"c68518f"},{"issueNo":63,"id":"i:2026-08-11-morning","date":"2026-08-11","edition":"morning","nArticles":9,"gems":1,"meanTemp":64.6,"newKeywords":20,"categories":{"trends":1,"tech":2,"news":3,"programming":2,"oss":1},"digest":"96d6dfdd"},{"issueNo":64,"id":"i:2026-08-11-midday","date":"2026-08-11","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.8,"newKeywords":35,"categories":{"tech":6,"programming":5,"oss":1},"digest":"d891dd81"},{"issueNo":65,"id":"i:2026-08-12-morning","date":"2026-08-12","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.1,"newKeywords":20,"categories":{"trends":1,"tech":3,"news":4,"programming":1,"oss":1},"digest":"484dfa63"},{"issueNo":66,"id":"i:2026-08-12-midday","date":"2026-08-12","edition":"midday","nArticles":12,"gems":1,"meanTemp":59.8,"newKeywords":22,"categories":{"tech":5,"programming":6,"oss":1},"digest":"efb6b830"},{"issueNo":67,"id":"i:2026-08-13-morning","date":"2026-08-13","edition":"morning","nArticles":10,"gems":1,"meanTemp":68.5,"newKeywords":22,"categories":{"trends":1,"news":4,"tech":3,"programming":2},"digest":"6b8f1b58"},{"issueNo":68,"id":"i:2026-08-13-midday","date":"2026-08-13","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.7,"newKeywords":30,"categories":{"programming":7,"tech":3,"oss":1},"digest":"9a66b75a"},{"issueNo":69,"id":"i:2026-08-14-morning","date":"2026-08-14","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.5,"newKeywords":27,"categories":{"trends":1,"tech":2,"programming":3,"news":4},"digest":"8a556b2"},{"issueNo":70,"id":"i:2026-08-14-midday","date":"2026-08-14","edition":"midday","nArticles":11,"gems":1,"meanTemp":66,"newKeywords":11,"categories":{"tech":5,"programming":6},"digest":"51ac8f78"},{"issueNo":71,"id":"i:2026-08-15-morning","date":"2026-08-15","edition":"morning","nArticles":9,"gems":1,"meanTemp":68.4,"newKeywords":17,"categories":{"trends":1,"programming":4,"news":3,"tech":1},"digest":"f35d488"},{"issueNo":72,"id":"i:2026-08-15-midday","date":"2026-08-15","edition":"midday","nArticles":13,"gems":1,"meanTemp":62.5,"newKeywords":24,"categories":{"oss":1,"programming":7,"tech":5},"digest":"fb503ac2"},{"issueNo":73,"id":"i:2026-08-16-morning","date":"2026-08-16","edition":"morning","nArticles":9,"gems":1,"meanTemp":66,"newKeywords":25,"categories":{"trends":1,"programming":3,"tech":1,"news":3,"oss":1},"digest":"9a5140ae"},{"issueNo":74,"id":"i:2026-08-16-midday","date":"2026-08-16","edition":"midday","nArticles":12,"gems":1,"meanTemp":65.4,"newKeywords":19,"categories":{"tech":5,"programming":7},"digest":"b9ccaf0a"},{"issueNo":75,"id":"i:2026-08-17-morning","date":"2026-08-17","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.7,"newKeywords":17,"categories":{"trends":1,"oss":1,"programming":3,"tech":1,"news":3},"digest":"1533985f"},{"issueNo":76,"id":"i:2026-08-17-midday","date":"2026-08-17","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.6,"newKeywords":35,"categories":{"programming":7,"tech":4,"oss":1},"digest":"29862997"},{"issueNo":77,"id":"i:2026-08-18-morning","date":"2026-08-18","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.4,"newKeywords":22,"categories":{"trends":1,"oss":1,"tech":2,"programming":2,"news":4},"digest":"408176d7"},{"issueNo":78,"id":"i:2026-08-18-midday","date":"2026-08-18","edition":"midday","nArticles":13,"gems":1,"meanTemp":64.4,"newKeywords":31,"categories":{"oss":1,"programming":6,"tech":6},"digest":"de2b82ed"},{"issueNo":79,"id":"i:2026-08-19-morning","date":"2026-08-19","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.5,"newKeywords":26,"categories":{"trends":1,"oss":1,"tech":3,"programming":4,"news":4},"digest":"a975492"},{"issueNo":80,"id":"i:2026-08-19-midday","date":"2026-08-19","edition":"midday","nArticles":10,"gems":1,"meanTemp":61.6,"newKeywords":17,"categories":{"programming":6,"tech":3,"oss":1},"digest":"c6eb1bef"},{"issueNo":81,"id":"i:2026-08-20-morning","date":"2026-08-20","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.3,"newKeywords":18,"categories":{"trends":1,"oss":1,"news":4,"programming":3,"tech":1},"digest":"6626ac02"},{"issueNo":82,"id":"i:2026-08-20-midday","date":"2026-08-20","edition":"midday","nArticles":13,"gems":1,"meanTemp":61.1,"newKeywords":29,"categories":{"tech":6,"programming":7},"digest":"8816caec"},{"issueNo":83,"id":"i:2026-08-21-morning","date":"2026-08-21","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.4,"newKeywords":20,"categories":{"trends":1,"oss":1,"tech":3,"news":3,"programming":1},"digest":"fd8ba029"},{"issueNo":84,"id":"i:2026-08-21-midday","date":"2026-08-21","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.9,"newKeywords":16,"categories":{"oss":1,"tech":5,"programming":6},"digest":"5e7cde3f"},{"issueNo":85,"id":"i:2026-08-22-morning","date":"2026-08-22","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.7,"newKeywords":19,"categories":{"trends":1,"tech":3,"programming":2,"news":4},"digest":"4ce6c9de"},{"issueNo":86,"id":"i:2026-08-22-midday","date":"2026-08-22","edition":"midday","nArticles":13,"gems":1,"meanTemp":59.9,"newKeywords":30,"categories":{"programming":7,"tech":5,"oss":1},"digest":"f5c0b11a"},{"issueNo":87,"id":"i:2026-08-23-morning","date":"2026-08-23","edition":"morning","nArticles":11,"gems":1,"meanTemp":68.6,"newKeywords":27,"categories":{"trends":1,"tech":2,"programming":4,"news":4},"digest":"35260b17"},{"issueNo":88,"id":"i:2026-08-23-midday","date":"2026-08-23","edition":"midday","nArticles":11,"gems":1,"meanTemp":63.1,"newKeywords":18,"categories":{"tech":5,"programming":6},"digest":"ec0bfe01"},{"issueNo":89,"id":"i:2026-08-24-morning","date":"2026-08-24","edition":"morning","nArticles":12,"gems":1,"meanTemp":67.4,"newKeywords":19,"categories":{"trends":1,"oss":1,"tech":3,"programming":3,"news":4},"digest":"8f64149"},{"issueNo":90,"id":"i:2026-08-24-midday","date":"2026-08-24","edition":"midday","nArticles":12,"gems":1,"meanTemp":58.2,"newKeywords":25,"categories":{"tech":5,"news":1,"programming":5,"oss":1},"digest":"e8764bcf"},{"issueNo":91,"id":"i:2026-08-25-morning","date":"2026-08-25","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.8,"newKeywords":28,"categories":{"trends":1,"oss":1,"tech":3,"programming":1,"news":4},"digest":"76ced407"},{"issueNo":92,"id":"i:2026-08-25-midday","date":"2026-08-25","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.4,"newKeywords":17,"categories":{"tech":4,"programming":6,"oss":1},"digest":"5b1f4e83"},{"issueNo":93,"id":"i:2026-08-26-morning","date":"2026-08-26","edition":"morning","nArticles":9,"gems":1,"meanTemp":65.9,"newKeywords":21,"categories":{"trends":1,"tech":2,"programming":2,"news":3,"oss":1},"digest":"9ce0dc8a"},{"issueNo":94,"id":"i:2026-08-26-midday","date":"2026-08-26","edition":"midday","nArticles":12,"gems":1,"meanTemp":62.2,"newKeywords":25,"categories":{"oss":1,"tech":5,"programming":6},"digest":"62cd4cd9"},{"issueNo":95,"id":"i:2026-08-27-morning","date":"2026-08-27","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.8,"newKeywords":25,"categories":{"trends":1,"programming":3,"news":4,"tech":1,"oss":1},"digest":"982ea899"},{"issueNo":96,"id":"i:2026-08-27-midday","date":"2026-08-27","edition":"midday","nArticles":11,"gems":1,"meanTemp":59,"newKeywords":19,"categories":{"programming":5,"tech":5,"oss":1},"digest":"3a5a733f"},{"issueNo":97,"id":"i:2026-08-28-midday","date":"2026-08-28","edition":"midday","nArticles":12,"gems":1,"meanTemp":57.3,"newKeywords":27,"categories":{"programming":6,"tech":5,"oss":1},"digest":"57fc2307"},{"issueNo":98,"id":"i:2026-08-28-morning","date":"2026-08-28","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.9,"newKeywords":9,"categories":{"trends":1,"oss":1,"news":4,"tech":1,"programming":3},"digest":"c3a393a5"},{"issueNo":99,"id":"i:2026-08-29-midday","date":"2026-08-29","edition":"midday","nArticles":9,"gems":1,"meanTemp":57.4,"newKeywords":16,"categories":{"programming":4,"tech":4,"oss":1},"digest":"6ec69de"},{"issueNo":100,"id":"i:2026-08-29-morning","date":"2026-08-29","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.8,"newKeywords":29,"categories":{"trends":1,"programming":4,"tech":3,"news":4,"oss":1},"digest":"fdb01932"},{"issueNo":101,"id":"i:2026-08-30-morning","date":"2026-08-30","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.1,"newKeywords":21,"categories":{"trends":1,"news":4,"tech":2,"programming":2,"oss":1},"digest":"97b55a9b"},{"issueNo":102,"id":"i:2026-08-30-midday","date":"2026-08-30","edition":"midday","nArticles":11,"gems":1,"meanTemp":63.9,"newKeywords":23,"categories":{"tech":5,"programming":6},"digest":"e88d42e7"},{"issueNo":103,"id":"i:2026-08-31-morning","date":"2026-08-31","edition":"morning","nArticles":13,"gems":1,"meanTemp":67.9,"newKeywords":23,"categories":{"trends":1,"tech":3,"news":5,"programming":4},"digest":"277a453"},{"issueNo":104,"id":"i:2026-08-31-midday","date":"2026-08-31","edition":"midday","nArticles":11,"gems":1,"meanTemp":58.4,"newKeywords":22,"categories":{"programming":6,"tech":4,"oss":1},"digest":"8dfe03cf"},{"issueNo":105,"id":"i:2026-09-01-morning","date":"2026-09-01","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.6,"newKeywords":26,"categories":{"trends":1,"tech":2,"programming":2,"news":4,"oss":1},"digest":"1dfdb79b"},{"issueNo":106,"id":"i:2026-09-01-midday","date":"2026-09-01","edition":"midday","nArticles":13,"gems":1,"meanTemp":63.6,"newKeywords":19,"categories":{"oss":1,"tech":5,"programming":7},"digest":"3b6a4f7f"},{"issueNo":107,"id":"i:2026-09-02-morning","date":"2026-09-02","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.7,"newKeywords":23,"categories":{"trends":1,"programming":3,"tech":1,"news":4,"blog":1},"digest":"8ec8a22f"},{"issueNo":108,"id":"i:2026-09-02-midday","date":"2026-09-02","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.9,"newKeywords":24,"categories":{"programming":7,"tech":4,"blog":1},"digest":"be6c4183"},{"issueNo":109,"id":"i:2026-09-03-morning","date":"2026-09-03","edition":"morning","nArticles":12,"gems":1,"meanTemp":65.6,"newKeywords":17,"categories":{"trends":1,"tech":3,"news":6,"programming":2},"digest":"7c1b4f03"},{"issueNo":110,"id":"i:2026-09-03-midday","date":"2026-09-03","edition":"midday","nArticles":12,"gems":1,"meanTemp":62.2,"newKeywords":28,"categories":{"programming":7,"tech":4,"blog":1},"digest":"b1e9b4f6"},{"issueNo":111,"id":"i:2026-09-04-morning","date":"2026-09-04","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.2,"newKeywords":21,"categories":{"trends":1,"oss":1,"tech":2,"programming":4,"news":5},"digest":"6039d1fb"},{"issueNo":112,"id":"i:2026-09-04-midday","date":"2026-09-04","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.2,"newKeywords":26,"categories":{"oss":1,"tech":4,"programming":7},"digest":"f7de4a95"},{"issueNo":113,"id":"i:2026-09-05-morning","date":"2026-09-05","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.1,"newKeywords":15,"categories":{"trends":1,"oss":1,"tech":2,"news":4,"programming":2},"digest":"dde76a51"},{"issueNo":114,"id":"i:2026-09-05-midday","date":"2026-09-05","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.2,"newKeywords":26,"categories":{"programming":5,"tech":6,"oss":1},"digest":"9545c133"},{"issueNo":115,"id":"i:2026-09-06-morning","date":"2026-09-06","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.3,"newKeywords":18,"categories":{"trends":1,"programming":4,"news":4,"oss":1},"digest":"d3c23e12"},{"issueNo":116,"id":"i:2026-09-06-midday","date":"2026-09-06","edition":"midday","nArticles":12,"gems":1,"meanTemp":62,"newKeywords":25,"categories":{"programming":7,"tech":4,"oss":1},"digest":"b252e72f"},{"issueNo":117,"id":"i:2026-09-07-morning","date":"2026-09-07","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.4,"newKeywords":17,"categories":{"trends":1,"oss":1,"news":4,"tech":2,"programming":2},"digest":"4e0f6bc"},{"issueNo":118,"id":"i:2026-09-07-midday","date":"2026-09-07","edition":"midday","nArticles":13,"gems":1,"meanTemp":61.1,"newKeywords":19,"categories":{"oss":1,"tech":6,"programming":6},"digest":"6dace16a"},{"issueNo":119,"id":"i:2026-09-08-morning","date":"2026-09-08","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.6,"newKeywords":17,"categories":{"trends":1,"oss":1,"news":4,"tech":2,"programming":2},"digest":"38f362f5"},{"issueNo":120,"id":"i:2026-09-08-midday","date":"2026-09-08","edition":"midday","nArticles":14,"gems":1,"meanTemp":61.8,"newKeywords":33,"categories":{"tech":5,"programming":8,"oss":1},"digest":"5b0b4d"},{"issueNo":121,"id":"i:2026-09-09-morning","date":"2026-09-09","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.9,"newKeywords":16,"categories":{"trends":1,"programming":4,"news":4,"blog":1},"digest":"4c8b6c19"},{"issueNo":122,"id":"i:2026-09-09-midday","date":"2026-09-09","edition":"midday","nArticles":10,"gems":1,"meanTemp":63.1,"newKeywords":19,"categories":{"tech":6,"programming":4},"digest":"6137d638"},{"issueNo":123,"id":"i:2026-09-10-morning","date":"2026-09-10","edition":"morning","nArticles":9,"gems":1,"meanTemp":70.8,"newKeywords":17,"categories":{"tech":2,"programming":3,"news":4},"digest":"d1c7bd01"},{"issueNo":124,"id":"i:2026-09-10-midday","date":"2026-09-10","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.5,"newKeywords":19,"categories":{"oss":1,"programming":5,"tech":5},"digest":"61b88ef9"},{"issueNo":125,"id":"i:2026-09-11-morning","date":"2026-09-11","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.5,"newKeywords":18,"categories":{"trends":1,"tech":3,"programming":1,"news":4,"oss":1},"digest":"e9186e5f"},{"issueNo":126,"id":"i:2026-09-11-midday","date":"2026-09-11","edition":"midday","nArticles":11,"gems":1,"meanTemp":56.5,"newKeywords":12,"categories":{"oss":1,"programming":6,"tech":4},"digest":"d0a78de4"},{"issueNo":127,"id":"i:2026-09-12-morning","date":"2026-09-12","edition":"morning","nArticles":9,"gems":1,"meanTemp":66.4,"newKeywords":13,"categories":{"trends":1,"oss":1,"programming":1,"tech":3,"news":3},"digest":"4841dae8"},{"issueNo":128,"id":"i:2026-09-12-midday","date":"2026-09-12","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.2,"newKeywords":19,"categories":{"oss":1,"tech":6,"programming":4},"digest":"6e6d2dc8"},{"issueNo":129,"id":"i:2026-09-13-morning","date":"2026-09-13","edition":"morning","nArticles":10,"gems":1,"meanTemp":62.9,"newKeywords":16,"categories":{"trends":1,"oss":1,"programming":3,"news":4,"tech":1},"digest":"b3f018aa"},{"issueNo":130,"id":"i:2026-09-13-midday","date":"2026-09-13","edition":"midday","nArticles":11,"gems":1,"meanTemp":57.9,"newKeywords":16,"categories":{"programming":5,"tech":5,"oss":1},"digest":"d6940f9a"},{"issueNo":131,"id":"i:2026-09-14-morning","date":"2026-09-14","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.2,"newKeywords":17,"categories":{"trends":1,"tech":1,"programming":4,"news":4},"digest":"adee309e"},{"issueNo":132,"id":"i:2026-09-14-midday","date":"2026-09-14","edition":"midday","nArticles":11,"gems":1,"meanTemp":65.4,"newKeywords":14,"categories":{"tech":5,"programming":6},"digest":"aad23e61"},{"issueNo":133,"id":"i:2026-09-15-morning","date":"2026-09-15","edition":"morning","nArticles":10,"gems":1,"meanTemp":63.9,"newKeywords":13,"categories":{"trends":1,"oss":1,"tech":2,"programming":2,"news":4},"digest":"9ff20817"},{"issueNo":134,"id":"i:2026-09-15-midday","date":"2026-09-15","edition":"midday","nArticles":10,"gems":1,"meanTemp":56.8,"newKeywords":24,"categories":{"oss":1,"programming":5,"tech":4},"digest":"d3624ed4"},{"issueNo":135,"id":"i:2026-09-16-morning","date":"2026-09-16","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.7,"newKeywords":21,"categories":{"trends":1,"tech":1,"programming":3,"news":4,"oss":1},"digest":"e801dc09"},{"issueNo":136,"id":"i:2026-09-16-midday","date":"2026-09-16","edition":"midday","nArticles":12,"gems":1,"meanTemp":68.8,"newKeywords":21,"categories":{"tech":5,"programming":7},"digest":"a930a09a"},{"issueNo":137,"id":"i:2026-09-17-morning","date":"2026-09-17","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.4,"newKeywords":16,"categories":{"tech":1,"trends":1,"programming":4,"news":4},"digest":"67ca3455"},{"issueNo":138,"id":"i:2026-09-17-midday","date":"2026-09-17","edition":"midday","nArticles":13,"gems":1,"meanTemp":60.3,"newKeywords":27,"categories":{"tech":7,"programming":6},"digest":"daf5e184"},{"issueNo":139,"id":"i:2026-09-18-morning","date":"2026-09-18","edition":"morning","nArticles":11,"gems":1,"meanTemp":69,"newKeywords":23,"categories":{"programming":5,"news":4,"tech":1,"blog":1},"digest":"3a382446"},{"issueNo":140,"id":"i:2026-09-18-midday","date":"2026-09-18","edition":"midday","nArticles":13,"gems":1,"meanTemp":63.2,"newKeywords":23,"categories":{"oss":1,"programming":6,"tech":6},"digest":"be4b31aa"},{"issueNo":141,"id":"i:2026-09-19-morning","date":"2026-09-19","edition":"morning","nArticles":13,"gems":1,"meanTemp":69.6,"newKeywords":27,"categories":{"trends":1,"oss":1,"tech":4,"programming":3,"news":4},"digest":"984d481"},{"issueNo":142,"id":"i:2026-09-19-midday","date":"2026-09-19","edition":"midday","nArticles":13,"gems":1,"meanTemp":66.5,"newKeywords":17,"categories":{"tech":8,"programming":5},"digest":"382fb339"},{"issueNo":143,"id":"i:2026-09-20-morning","date":"2026-09-20","edition":"morning","nArticles":9,"gems":1,"meanTemp":66.2,"newKeywords":19,"categories":{"trends":1,"oss":1,"programming":4,"news":3},"digest":"a7b96c8e"},{"issueNo":144,"id":"i:2026-09-20-midday","date":"2026-09-20","edition":"midday","nArticles":12,"gems":1,"meanTemp":65.3,"newKeywords":14,"categories":{"oss":1,"programming":6,"tech":5},"digest":"76bf2ba9"},{"issueNo":145,"id":"i:2026-09-21-morning","date":"2026-09-21","edition":"morning","nArticles":9,"gems":1,"meanTemp":66.3,"newKeywords":15,"categories":{"trends":1,"oss":1,"programming":2,"tech":2,"news":3},"digest":"b571706d"},{"issueNo":146,"id":"i:2026-09-21-midday","date":"2026-09-21","edition":"midday","nArticles":12,"gems":1,"meanTemp":64,"newKeywords":18,"categories":{"oss":1,"programming":7,"tech":4},"digest":"27e9d274"},{"issueNo":147,"id":"i:2026-09-22-morning","date":"2026-09-22","edition":"morning","nArticles":9,"gems":1,"meanTemp":66.6,"newKeywords":10,"categories":{"trends":1,"oss":1,"programming":2,"news":3,"tech":2},"digest":"f9e7a7f7"},{"issueNo":148,"id":"i:2026-09-22-midday","date":"2026-09-22","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.8,"newKeywords":20,"categories":{"oss":1,"programming":5,"tech":5},"digest":"d8a012f2"},{"issueNo":149,"id":"i:2026-09-23-morning","date":"2026-09-23","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.7,"newKeywords":22,"categories":{"trends":1,"programming":4,"news":4,"blog":1},"digest":"e8cca3c3"},{"issueNo":150,"id":"i:2026-09-23-midday","date":"2026-09-23","edition":"midday","nArticles":10,"gems":1,"meanTemp":55.6,"newKeywords":12,"categories":{"oss":1,"programming":6,"tech":3},"digest":"f87aa4e8"},{"issueNo":151,"id":"i:2026-09-24-morning","date":"2026-09-24","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.9,"newKeywords":23,"categories":{"trends":1,"oss":1,"tech":2,"programming":2,"news":4},"digest":"d9c924d"},{"issueNo":152,"id":"i:2026-09-24-midday","date":"2026-09-24","edition":"midday","nArticles":11,"gems":1,"meanTemp":63.3,"newKeywords":24,"categories":{"oss":1,"tech":5,"programming":5},"digest":"4076e628"},{"issueNo":153,"id":"i:2026-09-25-morning","date":"2026-09-25","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.8,"newKeywords":21,"categories":{"trends":1,"oss":1,"programming":3,"news":4,"tech":1},"digest":"e164b8fb"},{"issueNo":154,"id":"i:2026-09-25-midday","date":"2026-09-25","edition":"midday","nArticles":12,"gems":1,"meanTemp":62.8,"newKeywords":18,"categories":{"oss":1,"tech":5,"programming":6},"digest":"20b2bdc0"},{"issueNo":155,"id":"i:2026-09-26-morning","date":"2026-09-26","edition":"morning","nArticles":10,"gems":1,"meanTemp":62.8,"newKeywords":10,"categories":{"trends":1,"news":4,"tech":1,"programming":3,"oss":1},"digest":"8f0ff5ad"},{"issueNo":156,"id":"i:2026-09-26-midday","date":"2026-09-26","edition":"midday","nArticles":11,"gems":1,"meanTemp":65,"newKeywords":23,"categories":{"tech":6,"programming":5},"digest":"a3087e7"},{"issueNo":157,"id":"i:2026-09-27-morning","date":"2026-09-27","edition":"morning","nArticles":9,"gems":1,"meanTemp":68.8,"newKeywords":11,"categories":{"trends":1,"tech":2,"news":3,"programming":2,"blog":1},"digest":"24945f36"},{"issueNo":158,"id":"i:2026-09-27-midday","date":"2026-09-27","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.3,"newKeywords":17,"categories":{"tech":6,"programming":6},"digest":"f753cee9"},{"issueNo":159,"id":"i:2026-09-28-morning","date":"2026-09-28","edition":"morning","nArticles":13,"gems":1,"meanTemp":70.2,"newKeywords":23,"categories":{"trends":1,"oss":1,"tech":4,"programming":3,"news":4},"digest":"fc1f8bc6"},{"issueNo":160,"id":"i:2026-09-28-midday","date":"2026-09-28","edition":"midday","nArticles":12,"gems":1,"meanTemp":63.6,"newKeywords":14,"categories":{"oss":1,"programming":5,"tech":6},"digest":"dda2ac06"},{"issueNo":161,"id":"i:2026-09-29-morning","date":"2026-09-29","edition":"morning","nArticles":9,"gems":1,"meanTemp":67.8,"newKeywords":22,"categories":{"trends":1,"tech":2,"programming":3,"news":3},"digest":"2a72611"},{"issueNo":162,"id":"i:2026-09-29-midday","date":"2026-09-29","edition":"midday","nArticles":11,"gems":1,"meanTemp":62.3,"newKeywords":20,"categories":{"tech":5,"programming":6},"digest":"f9f43b99"},{"issueNo":163,"id":"i:2026-09-30-morning","date":"2026-09-30","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.6,"newKeywords":20,"categories":{"trends":1,"programming":4,"tech":3,"news":4,"oss":1},"digest":"d2346022"},{"issueNo":164,"id":"i:2026-09-30-midday","date":"2026-09-30","edition":"midday","nArticles":12,"gems":1,"meanTemp":66.8,"newKeywords":19,"categories":{"tech":6,"programming":6},"digest":"12169400"},{"issueNo":165,"id":"i:2026-10-01-morning","date":"2026-10-01","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.8,"newKeywords":19,"categories":{"trends":1,"oss":1,"programming":3,"tech":1,"news":4},"digest":"5aac42fd"},{"issueNo":166,"id":"i:2026-10-01-midday","date":"2026-10-01","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.8,"newKeywords":24,"categories":{"oss":1,"programming":7,"tech":4},"digest":"a9543f50"},{"issueNo":167,"id":"i:2026-10-02-morning","date":"2026-10-02","edition":"morning","nArticles":10,"gems":1,"meanTemp":73.3,"newKeywords":27,"categories":{"trends":1,"programming":6,"news":1,"tech":1,"oss":1},"digest":"ec8fa44d"},{"issueNo":168,"id":"i:2026-10-02-midday","date":"2026-10-02","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.7,"newKeywords":27,"categories":{"oss":1,"programming":6,"tech":5},"digest":"e246e375"},{"issueNo":169,"id":"i:2026-10-03-morning","date":"2026-10-03","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.2,"newKeywords":24,"categories":{"trends":1,"oss":1,"programming":3,"tech":3,"news":5},"digest":"b101231d"},{"issueNo":170,"id":"i:2026-10-03-midday","date":"2026-10-03","edition":"midday","nArticles":12,"gems":1,"meanTemp":60.6,"newKeywords":22,"categories":{"oss":1,"programming":7,"tech":4},"digest":"e60a61eb"},{"issueNo":171,"id":"i:2026-10-04-morning","date":"2026-10-04","edition":"morning","nArticles":10,"gems":1,"meanTemp":67.8,"newKeywords":16,"categories":{"trends":1,"oss":1,"programming":3,"tech":2,"news":3},"digest":"bd417126"},{"issueNo":172,"id":"i:2026-10-04-midday","date":"2026-10-04","edition":"midday","nArticles":11,"gems":1,"meanTemp":57.8,"newKeywords":18,"categories":{"oss":1,"programming":6,"tech":4},"digest":"2bffdaa1"},{"issueNo":173,"id":"i:2026-10-05-morning","date":"2026-10-05","edition":"morning","nArticles":8,"gems":1,"meanTemp":64.4,"newKeywords":13,"categories":{"trends":1,"oss":1,"tech":2,"programming":1,"news":3},"digest":"6304340c"},{"issueNo":174,"id":"i:2026-10-05-midday","date":"2026-10-05","edition":"midday","nArticles":9,"gems":1,"meanTemp":64,"newKeywords":15,"categories":{"tech":3,"programming":5,"oss":1},"digest":"95066f10"},{"issueNo":175,"id":"i:2026-10-06-morning","date":"2026-10-06","edition":"morning","nArticles":12,"gems":1,"meanTemp":72.7,"newKeywords":23,"categories":{"trends":1,"programming":4,"tech":3,"news":3,"oss":1},"digest":"516f779f"},{"issueNo":176,"id":"i:2026-10-06-midday","date":"2026-10-06","edition":"midday","nArticles":10,"gems":1,"meanTemp":57.6,"newKeywords":11,"categories":{"oss":1,"programming":5,"tech":4},"digest":"bb68b527"},{"issueNo":177,"id":"i:2026-10-07-morning","date":"2026-10-07","edition":"morning","nArticles":12,"gems":1,"meanTemp":73.8,"newKeywords":24,"categories":{"trends":1,"tech":3,"news":2,"programming":6},"digest":"eb261dcb"},{"issueNo":178,"id":"i:2026-10-07-midday","date":"2026-10-07","edition":"midday","nArticles":11,"gems":1,"meanTemp":60.5,"newKeywords":29,"categories":{"programming":6,"tech":4,"oss":1},"digest":"a3d84d64"},{"issueNo":179,"id":"i:2026-10-08-morning","date":"2026-10-08","edition":"morning","nArticles":12,"gems":1,"meanTemp":67.3,"newKeywords":16,"categories":{"trends":1,"programming":4,"news":4,"tech":2,"oss":1},"digest":"e758d6a5"},{"issueNo":180,"id":"i:2026-10-08-midday","date":"2026-10-08","edition":"midday","nArticles":11,"gems":1,"meanTemp":60.4,"newKeywords":18,"categories":{"oss":1,"tech":6,"programming":4},"digest":"4c00acc8"},{"issueNo":181,"id":"i:2026-10-09-morning","date":"2026-10-09","edition":"morning","nArticles":12,"gems":1,"meanTemp":67.6,"newKeywords":23,"categories":{"trends":1,"oss":1,"tech":3,"programming":3,"news":4},"digest":"bdcb7040"},{"issueNo":182,"id":"i:2026-10-09-midday","date":"2026-10-09","edition":"midday","nArticles":11,"gems":1,"meanTemp":58.3,"newKeywords":18,"categories":{"tech":5,"programming":5,"oss":1},"digest":"d5bf50d2"},{"issueNo":183,"id":"i:2026-10-10-morning","date":"2026-10-10","edition":"morning","nArticles":13,"gems":1,"meanTemp":70.4,"newKeywords":29,"categories":{"trends":1,"oss":1,"tech":3,"programming":4,"news":4},"digest":"5f3db486"},{"issueNo":184,"id":"i:2026-10-10-midday","date":"2026-10-10","edition":"midday","nArticles":11,"gems":1,"meanTemp":64.8,"newKeywords":23,"categories":{"tech":6,"programming":5},"digest":"9c42eb1a"},{"issueNo":185,"id":"i:2026-10-11-morning","date":"2026-10-11","edition":"morning","nArticles":12,"gems":1,"meanTemp":72.1,"newKeywords":24,"categories":{"trends":1,"tech":4,"programming":3,"news":3,"oss":1},"digest":"e1ce8898"},{"issueNo":186,"id":"i:2026-10-11-midday","date":"2026-10-11","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.8,"newKeywords":18,"categories":{"oss":1,"programming":5,"tech":6},"digest":"ea987856"},{"issueNo":187,"id":"i:2026-10-12-morning","date":"2026-10-12","edition":"morning","nArticles":13,"gems":1,"meanTemp":69.8,"newKeywords":22,"categories":{"trends":1,"oss":1,"programming":4,"tech":3,"news":4},"digest":"facd288b"},{"issueNo":188,"id":"i:2026-10-12-midday","date":"2026-10-12","edition":"midday","nArticles":11,"gems":1,"meanTemp":60.3,"newKeywords":23,"categories":{"oss":1,"programming":6,"tech":4},"digest":"ad85ee14"},{"issueNo":189,"id":"i:2026-10-13-morning","date":"2026-10-13","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.6,"newKeywords":13,"categories":{"trends":1,"tech":3,"news":4,"programming":1,"blog":1},"digest":"7e809e58"},{"issueNo":190,"id":"i:2026-10-13-midday","date":"2026-10-13","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.8,"newKeywords":14,"categories":{"oss":1,"tech":5,"programming":6},"digest":"83b94e3e"},{"issueNo":191,"id":"i:2026-10-14-morning","date":"2026-10-14","edition":"morning","nArticles":8,"gems":1,"meanTemp":68.8,"newKeywords":14,"categories":{"trends":1,"programming":3,"news":2,"tech":1,"oss":1},"digest":"c28ffb5"},{"issueNo":192,"id":"i:2026-10-14-midday","date":"2026-10-14","edition":"midday","nArticles":12,"gems":1,"meanTemp":64.1,"newKeywords":19,"categories":{"tech":5,"programming":7},"digest":"741ed46"},{"issueNo":193,"id":"i:2026-10-15-morning","date":"2026-10-15","edition":"morning","nArticles":10,"gems":1,"meanTemp":66.4,"newKeywords":23,"categories":{"trends":1,"programming":3,"tech":1,"news":4,"oss":1},"digest":"29148f39"},{"issueNo":194,"id":"i:2026-10-15-midday","date":"2026-10-15","edition":"midday","nArticles":12,"gems":1,"meanTemp":64,"newKeywords":22,"categories":{"tech":5,"programming":7},"digest":"f854afd9"},{"issueNo":195,"id":"i:2026-10-16-morning","date":"2026-10-16","edition":"morning","nArticles":11,"gems":1,"meanTemp":66.4,"newKeywords":11,"categories":{"trends":1,"news":4,"programming":3,"tech":2,"oss":1},"digest":"ecb7bde8"},{"issueNo":196,"id":"i:2026-10-16-midday","date":"2026-10-16","edition":"midday","nArticles":11,"gems":1,"meanTemp":65.9,"newKeywords":16,"categories":{"oss":1,"programming":7,"tech":3},"digest":"81530c81"},{"issueNo":197,"id":"i:2026-10-17-morning","date":"2026-10-17","edition":"morning","nArticles":12,"gems":1,"meanTemp":67.8,"newKeywords":21,"categories":{"trends":1,"oss":1,"tech":3,"news":4,"programming":3},"digest":"e885effd"},{"issueNo":198,"id":"i:2026-10-17-midday","date":"2026-10-17","edition":"midday","nArticles":9,"gems":1,"meanTemp":58.2,"newKeywords":17,"categories":{"oss":1,"tech":4,"programming":4},"digest":"f9b880a9"},{"issueNo":199,"id":"i:2026-10-18-morning","date":"2026-10-18","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.9,"newKeywords":27,"categories":{"trends":1,"oss":1,"tech":3,"programming":4,"news":4},"digest":"9321cdb9"},{"issueNo":200,"id":"i:2026-10-18-midday","date":"2026-10-18","edition":"midday","nArticles":9,"gems":1,"meanTemp":61,"newKeywords":12,"categories":{"oss":1,"programming":7,"tech":1},"digest":"af42b41b"},{"issueNo":201,"id":"i:2026-10-19-morning","date":"2026-10-19","edition":"morning","nArticles":8,"gems":1,"meanTemp":66.9,"newKeywords":12,"categories":{"trends":1,"oss":1,"tech":2,"programming":2,"news":2},"digest":"196f3c7d"},{"issueNo":202,"id":"i:2026-10-19-midday","date":"2026-10-19","edition":"midday","nArticles":13,"gems":1,"meanTemp":63.8,"newKeywords":14,"categories":{"oss":1,"tech":6,"programming":6},"digest":"ac7d5383"},{"issueNo":203,"id":"i:2026-10-20-morning","date":"2026-10-20","edition":"morning","nArticles":10,"gems":1,"meanTemp":69.7,"newKeywords":14,"categories":{"trends":1,"tech":3,"news":4,"programming":2},"digest":"71d4932"},{"issueNo":204,"id":"i:2026-10-20-midday","date":"2026-10-20","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.8,"newKeywords":17,"categories":{"tech":5,"programming":6,"oss":1},"digest":"32a9c712"},{"issueNo":205,"id":"i:2026-10-21-morning","date":"2026-10-21","edition":"morning","nArticles":10,"gems":1,"meanTemp":64,"newKeywords":13,"categories":{"trends":1,"oss":1,"news":4,"programming":3,"tech":1},"digest":"54ad8cef"},{"issueNo":206,"id":"i:2026-10-21-midday","date":"2026-10-21","edition":"midday","nArticles":11,"gems":1,"meanTemp":61.6,"newKeywords":22,"categories":{"oss":1,"programming":7,"tech":3},"digest":"d7fc3c88"},{"issueNo":207,"id":"i:2026-10-22-morning","date":"2026-10-22","edition":"morning","nArticles":10,"gems":1,"meanTemp":69.6,"newKeywords":17,"categories":{"trends":1,"tech":3,"programming":2,"news":4},"digest":"e6649f43"},{"issueNo":208,"id":"i:2026-10-22-midday","date":"2026-10-22","edition":"midday","nArticles":10,"gems":1,"meanTemp":58.4,"newKeywords":21,"categories":{"oss":1,"programming":4,"tech":5},"digest":"cca59276"},{"issueNo":209,"id":"i:2026-10-23-morning","date":"2026-10-23","edition":"morning","nArticles":10,"gems":1,"meanTemp":68.3,"newKeywords":16,"categories":{"tech":1,"trends":1,"programming":4,"news":4},"digest":"c8a61ea3"},{"issueNo":210,"id":"i:2026-10-23-midday","date":"2026-10-23","edition":"midday","nArticles":11,"gems":1,"meanTemp":63,"newKeywords":16,"categories":{"tech":6,"programming":5},"digest":"7495319e"},{"issueNo":211,"id":"i:2026-10-24-morning","date":"2026-10-24","edition":"morning","nArticles":9,"gems":1,"meanTemp":62.9,"newKeywords":14,"categories":{"trends":1,"oss":1,"tech":3,"programming":1,"news":3},"digest":"633a57aa"},{"issueNo":212,"id":"i:2026-10-24-midday","date":"2026-10-24","edition":"midday","nArticles":13,"gems":1,"meanTemp":55.7,"newKeywords":15,"categories":{"programming":7,"tech":5,"oss":1},"digest":"f2571c6a"},{"issueNo":213,"id":"i:2026-10-25-morning","date":"2026-10-25","edition":"morning","nArticles":10,"gems":1,"meanTemp":64.4,"newKeywords":15,"categories":{"trends":1,"oss":1,"programming":2,"news":4,"tech":2},"digest":"9f819344"},{"issueNo":214,"id":"i:2026-10-25-midday","date":"2026-10-25","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.7,"newKeywords":12,"categories":{"oss":1,"tech":5,"programming":6},"digest":"d45c720c"},{"issueNo":215,"id":"i:2026-10-26-morning","date":"2026-10-26","edition":"morning","nArticles":12,"gems":1,"meanTemp":70.5,"newKeywords":25,"categories":{"oss":1,"news":4,"programming":4,"tech":3},"digest":"e9ae4db9"},{"issueNo":216,"id":"i:2026-10-26-midday","date":"2026-10-26","edition":"midday","nArticles":12,"gems":1,"meanTemp":64.9,"newKeywords":15,"categories":{"oss":1,"tech":5,"programming":6},"digest":"fa839cf6"},{"issueNo":217,"id":"i:2026-10-27-morning","date":"2026-10-27","edition":"morning","nArticles":11,"gems":1,"meanTemp":70,"newKeywords":20,"categories":{"oss":1,"programming":4,"tech":2,"news":4},"digest":"d466774c"},{"issueNo":218,"id":"i:2026-10-27-midday","date":"2026-10-27","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.3,"newKeywords":17,"categories":{"oss":1,"programming":5,"tech":5},"digest":"f2c7331b"},{"issueNo":219,"id":"i:2026-10-28-morning","date":"2026-10-28","edition":"morning","nArticles":10,"gems":1,"meanTemp":66,"newKeywords":13,"categories":{"trends":1,"oss":1,"tech":3,"programming":1,"news":4},"digest":"e864229e"},{"issueNo":220,"id":"i:2026-10-28-midday","date":"2026-10-28","edition":"midday","nArticles":11,"gems":1,"meanTemp":59.5,"newKeywords":21,"categories":{"oss":1,"tech":5,"programming":5},"digest":"280bbc8f"},{"issueNo":221,"id":"i:2026-10-29-morning","date":"2026-10-29","edition":"morning","nArticles":13,"gems":1,"meanTemp":68.5,"newKeywords":22,"categories":{"trends":1,"oss":1,"tech":3,"programming":4,"news":4},"digest":"f5f33f5b"},{"issueNo":222,"id":"i:2026-10-29-midday","date":"2026-10-29","edition":"midday","nArticles":11,"gems":1,"meanTemp":60.4,"newKeywords":19,"categories":{"oss":1,"programming":5,"tech":5},"digest":"2ee2daa5"},{"issueNo":223,"id":"i:2026-10-30-morning","date":"2026-10-30","edition":"morning","nArticles":12,"gems":1,"meanTemp":72.3,"newKeywords":20,"categories":{"trends":1,"tech":3,"programming":5,"news":3},"digest":"bdacef0a"},{"issueNo":224,"id":"i:2026-10-30-midday","date":"2026-10-30","edition":"midday","nArticles":11,"gems":1,"meanTemp":60.9,"newKeywords":24,"categories":{"programming":7,"tech":3,"oss":1},"digest":"81271907"},{"issueNo":225,"id":"i:2026-10-31-morning","date":"2026-10-31","edition":"morning","nArticles":13,"gems":1,"meanTemp":69.4,"newKeywords":25,"categories":{"trends":1,"oss":1,"programming":4,"news":4,"tech":3},"digest":"5a338667"},{"issueNo":226,"id":"i:2026-10-31-midday","date":"2026-10-31","edition":"midday","nArticles":10,"gems":1,"meanTemp":59.4,"newKeywords":11,"categories":{"oss":1,"tech":4,"programming":5},"digest":"735ac046"},{"issueNo":227,"id":"i:2026-11-01-morning","date":"2026-11-01","edition":"morning","nArticles":10,"gems":1,"meanTemp":65.3,"newKeywords":24,"categories":{"trends":1,"tech":2,"programming":2,"news":4,"oss":1},"digest":"6af12201"},{"issueNo":228,"id":"i:2026-11-01-midday","date":"2026-11-01","edition":"midday","nArticles":11,"gems":1,"meanTemp":58.6,"newKeywords":24,"categories":{"oss":1,"programming":6,"tech":4},"digest":"b7095367"},{"issueNo":229,"id":"i:2026-11-02-morning","date":"2026-11-02","edition":"morning","nArticles":9,"gems":2,"meanTemp":67.4,"newKeywords":14,"categories":{"trends":1,"programming":3,"tech":1,"news":3,"oss":1},"digest":"438292c9"},{"issueNo":230,"id":"i:2026-11-02-midday","date":"2026-11-02","edition":"midday","nArticles":12,"gems":2,"meanTemp":62.1,"newKeywords":17,"categories":{"tech":6,"programming":5,"blog":1},"digest":"51880955"},{"issueNo":231,"id":"i:2026-11-03-morning","date":"2026-11-03","edition":"morning","nArticles":10,"gems":1,"meanTemp":72.6,"newKeywords":18,"categories":{"trends":1,"tech":4,"programming":2,"news":3},"digest":"a071977f"},{"issueNo":232,"id":"i:2026-11-03-midday","date":"2026-11-03","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.3,"newKeywords":20,"categories":{"programming":5,"tech":6,"oss":1},"digest":"921463c6"},{"issueNo":233,"id":"i:2026-11-04-morning","date":"2026-11-04","edition":"morning","nArticles":13,"gems":1,"meanTemp":70.8,"newKeywords":18,"categories":{"trends":1,"oss":1,"tech":2,"programming":5,"news":4},"digest":"a8d92000"},{"issueNo":234,"id":"i:2026-11-04-midday","date":"2026-11-04","edition":"midday","nArticles":10,"gems":1,"meanTemp":66,"newKeywords":11,"categories":{"oss":1,"tech":5,"programming":4},"digest":"10206e11"},{"issueNo":235,"id":"i:2026-11-05-morning","date":"2026-11-05","edition":"morning","nArticles":8,"gems":1,"meanTemp":69.4,"newKeywords":16,"categories":{"trends":1,"oss":1,"programming":4,"news":2},"digest":"ecc97afc"},{"issueNo":236,"id":"i:2026-11-05-midday","date":"2026-11-05","edition":"midday","nArticles":12,"gems":1,"meanTemp":61.5,"newKeywords":29,"categories":{"oss":1,"programming":8,"tech":3},"digest":"6c2a01b9"},{"issueNo":237,"id":"i:2026-11-06-morning","date":"2026-11-06","edition":"morning","nArticles":11,"gems":1,"meanTemp":66.5,"newKeywords":25,"categories":{"programming":3,"tech":2,"news":3,"trends":2,"oss":1},"digest":"99297e7f"},{"issueNo":238,"id":"i:2026-11-06-midday","date":"2026-11-06","edition":"midday","nArticles":11,"gems":1,"meanTemp":61,"newKeywords":20,"categories":{"oss":1,"tech":3,"programming":7},"digest":"1e20ef99"}]};
+const SOAK={"runs":40,"length":1000,"stats":{"noLife":0,"sterileEnd":5,"frozenEnd":0,"hotEnd":5,"reachedCx3":40,"reachedCx4":40,"reachedMind":3,"landed":40,"goe":40,"monoculture":0,"stagnantTail":0,"snowballs":170,"mass":197}};
+const EXPECTED_HASH="808f8d49df1413f08e17fffb1b79fd4f";
+(function(){
+"use strict";
+const t0=performance.now();
+const H=runHistory('times-garden-v1',LEDGER.issues);
+const ms=Math.round(performance.now()-t0);
+const S=H.snapshots,last=S[S.length-1];
+const $=id=>document.getElementById(id);
+const CX=['生命なし','微生物','真核生物','多細胞の生き物','大型の生き物','考える生き物'];
+const STAR={red:'赤色矮星',yellow:'黄色い恒星',blue:'青白い恒星'};
+const fmt=(v,d=1)=>Number(v).toFixed(d);
+function co2txt(v){return v>=10000?fmt(v/10000,1)+'%':Math.round(v)+'ppm';}
+// tiles
+const tiles=[['経過時間',`${fmt(last.gyr*10,1)} 億年`,`${S.length}号ぶん`],['気温',`${fmt(last.T,1)}℃`,last.snowball?'全球凍結中':''],['CO2',co2txt(last.CO2),''],['酸素',`${fmt(last.O2,2)}`,'現在の地球を1とした値'],
+  ['生き物の系統',`${last.nSpecies}`,`これまでの絶滅 ${last.extinctTotal}`],['最も複雑な生き物',CX[last.maxCx]||'—',''],['恒星',STAR[H.star],'']];
+const tb=$('tiles');for(const[k,v,s]of tiles){const d=document.createElement('div');d.className='tile';const a=document.createElement('span');a.className='k';a.textContent=k;const b=document.createElement('span');b.className='v';b.textContent=v;d.append(a,b);if(s){const c=document.createElement('span');c.className='s';c.textContent=s;d.append(c);}tb.append(d);}
+// chronicle
+const MINOR=e=>e.k==='super'||(e.k==='impact'&&e.size==='small');
+const BIG=new Set(['abio','goe','euk','multi','land','complex','mind','snowball','mass','sterile','oceanLost','abio2']);
+function renderChron(){const ol=$('chron');ol.textContent='';const all=$('showMinor').checked;
+  for(const s of S)for(const e of s.events){if(!all&&MINOR(e))continue;const li=document.createElement('li');if(BIG.has(e.k))li.className='big';
+    const n=document.createElement('span');n.className='n';n.textContent='#'+s.issueNo;const g=document.createElement('span');g.className='g';g.textContent=fmt(s.gyr,2)+' Gyr';const t=document.createElement('span');t.className='t';t.textContent=e.t+(s.date?`（${s.date}${s.edition==='morning'?' 朝刊':s.edition==='midday'?' 昼刊':''}）`:'');li.append(n,g,t);ol.append(li);}}
+$('showMinor').addEventListener('change',renderChron);renderChron();
+// soak
+const st=SOAK.stats,N=SOAK.runs,pc=v=>Math.round(v/N*100)+'%';
+$('soakNote').textContent=`合成の号で ${SOAK.length}号（約${fmt(SOAK.length*0.2,0)}億年ぶん）を、種を変えて${N}本回した結果。柱3「覗くたびに驚きがある」の確認用。`;
+const rows=[['生命が生まれなかった',pc(st.noLife)],['最後に全滅していた',pc(st.sterileEnd)],['最後の200号がずっと凍結',pc(st.frozenEnd)],['最後に灼熱（70℃超）',pc(st.hotEnd)],['大酸化イベントが起きた',pc(st.goe)],['陸上進出した',pc(st.landed)],['大型の生き物に到達',pc(st.reachedCx4)],['考える生き物に到達',pc(st.reachedMind)],['一種独占が続いた',pc(st.monoculture)],['最後の500号で大きな出来事なし',pc(st.stagnantTail)],['全球凍結（1本あたり）',fmt(st.snowballs/N,1)+'回'],['大量絶滅（1本あたり）',fmt(st.mass/N,1)+'回']];
+const T=$('soak');for(const[k,v]of rows){const tr=document.createElement('tr');const a=document.createElement('td');a.textContent=k;const b=document.createElement('td');b.className='num';b.textContent=v;tr.append(a,b);T.append(tr);}
+const hh=historyHash(H);$('det').innerHTML='';const p1=document.createElement('span');p1.textContent=`このブラウザで計算した全史のハッシュ ${hh.slice(0,12)}… は、Node で計算した値と`;const p2=document.createElement('b');p2.className=hh===EXPECTED_HASH?'ok':'';p2.textContent=hh===EXPECTED_HASH?'一致しました':'一致しませんでした';const p3=document.createElement('span');p3.textContent=`（計算時間 ${ms}ms）。`;$('det').append(p1,p2,p3);
+// chart
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const panels=[{k:'T',label:'気温（℃）',col:'--temp',min:Math.min(-30,...S.map(s=>s.T)),max:Math.max(40,...S.map(s=>s.T))},
+  {k:'CO2',label:'CO2（対数）',col:'--co2',log:true,min:10,max:Math.max(1e5,...S.map(s=>s.CO2))},
+  {k:'O2',label:'酸素（現在の地球=1）',col:'--o2',min:0,max:Math.max(1,...S.map(s=>s.O2))},
+  {k:'bio',label:'生き物の量',stack:true,min:0,max:Math.max(1,...S.map(s=>s.bioOcean+s.bioLand))},
+  {k:'nSpecies',label:'系統数',col:'--accent',min:0,max:50}];
+$('legend').innerHTML='';[['気温','--temp'],['全球凍結の期間','--snow'],['CO2','--co2'],['酸素','--o2'],['海の生き物','--ocean'],['陸の生き物','--land'],['系統数','--accent']].forEach(([n,c])=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=css(c);s.append(i,n);$('legend').append(s);});
+const cv=$('chart'),ctx=cv.getContext('2d');let W=0,Hh=0,dpr=1,hover=-1;const ML=118,MR=14,MT=26,GAP=16;
+const majors=[];S.forEach((s,i)=>s.events.forEach(e=>{if(BIG.has(e.k))majors.push({i,e});}));
+function layout(){const r=cv.parentElement.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);W=r.width;const ph=Math.max(64,Math.min(96,W*.09));Hh=MT+panels.length*(ph+GAP)+22;cv.style.height=Hh+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(Hh*dpr);panels.forEach((p,j)=>{p.y=MT+j*(ph+GAP);p.h=ph;});draw();}
+const xOf=i=>ML+(W-ML-MR)*(S.length<2?0:i/(S.length-1));
+function yOf(p,v){let a=p.min,b=p.max,x=v;if(p.log){a=Math.log10(a);b=Math.log10(b);x=Math.log10(Math.max(v,p.min));}return p.y+p.h-(x-a)/(b-a)*p.h;}
+function draw(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,Hh);ctx.font='12px "Zen Kaku Gothic New",system-ui,sans-serif';
+  // event markers
+  ctx.strokeStyle='rgba(233,185,101,.28)';ctx.lineWidth=1;for(const m of majors){const x=Math.round(xOf(m.i))+.5;ctx.beginPath();ctx.moveTo(x,MT-8);ctx.lineTo(x,Hh-22);ctx.stroke();ctx.fillStyle=css('--accent');ctx.beginPath();ctx.arc(x,MT-10,2.5,0,7);ctx.fill();}
+  for(const p of panels){ctx.fillStyle=css('--muted');ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(p.label,0,p.y+10);
+    ctx.strokeStyle=css('--grid');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ML,p.y+p.h+.5);ctx.lineTo(W-MR,p.y+p.h+.5);ctx.stroke();
+    // ticks
+    ctx.fillStyle=css('--faint');ctx.font='11px "IBM Plex Mono",monospace';ctx.textAlign='right';
+    const ticks=p.log?[100,1e4,1e6].filter(v=>v>=p.min&&v<=p.max):[p.min,p.max];for(const v of ticks){const y=yOf(p,v);ctx.fillText(p.log?(v>=1e4?(v/1e4)+'%':v+'ppm'):fmt(v,p.k==='O2'?1:0),ML-6,y);ctx.strokeStyle=css('--grid');ctx.beginPath();ctx.moveTo(ML,Math.round(y)+.5);ctx.lineTo(W-MR,Math.round(y)+.5);ctx.stroke();}
+    if(p.k==='T'){ // snowball bands and zero line
+      ctx.fillStyle='rgba(159,198,255,.16)';S.forEach((s,i)=>{if(s.snowball){const x0=xOf(Math.max(0,i-.5)),x1=xOf(Math.min(S.length-1,i+.5));ctx.fillRect(x0,p.y,x1-x0,p.h);}});
+      const y0=yOf(p,0);ctx.setLineDash([3,3]);ctx.strokeStyle=css('--faint');ctx.beginPath();ctx.moveTo(ML,y0);ctx.lineTo(W-MR,y0);ctx.stroke();ctx.setLineDash([]);ctx.fillText('0℃',ML-6,y0);}
+    ctx.font='12px "Zen Kaku Gothic New",system-ui,sans-serif';
+    if(p.stack){ // stacked area: ocean then land, 2px gap
+      const area=(lo,hi,col)=>{ctx.fillStyle=col;ctx.beginPath();S.forEach((s,i)=>{const x=xOf(i),y=yOf(p,hi(s));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});for(let i=S.length-1;i>=0;i--)ctx.lineTo(xOf(i),yOf(p,lo(S[i])));ctx.closePath();ctx.fill();};
+      area(()=>0,s=>s.bioOcean,css('--ocean'));area(s=>s.bioOcean,s=>s.bioOcean+s.bioLand,css('--land'));
+      ctx.strokeStyle=css('--panel');ctx.lineWidth=2;ctx.beginPath();S.forEach((s,i)=>{const x=xOf(i),y=yOf(p,s.bioOcean);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+      // direct labels at the right end
+      const L=S[S.length-1];ctx.textAlign='right';ctx.fillStyle=css('--fg');if(L.bioOcean>0.05)ctx.fillText('海',W-MR-4,yOf(p,L.bioOcean/2));if(L.bioLand>0.05)ctx.fillText('陸',W-MR-4,yOf(p,L.bioOcean+L.bioLand/2));}
+    else{ctx.strokeStyle=css(p.col);ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();S.forEach((s,i)=>{const x=xOf(i),y=yOf(p,s[p.k]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}}
+  // x axis
+  ctx.fillStyle=css('--faint');ctx.font='11px "IBM Plex Mono",monospace';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  const step=S.length>150?50:20;for(let n=step;n<=S.length;n+=step){const i=S.findIndex(s=>s.issueNo>=n);if(i>=0)ctx.fillText('#'+S[i].issueNo,xOf(i),Hh-6);}
+  ctx.textAlign='left';ctx.fillText('#1',ML,Hh-6);
+  if(hover>=0){const x=xOf(hover);ctx.strokeStyle=css('--fg');ctx.globalAlpha=.5;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,MT);ctx.lineTo(x,Hh-22);ctx.stroke();ctx.globalAlpha=1;
+    for(const p of panels){const s=S[hover];const v=p.stack?s.bioOcean+s.bioLand:s[p.k];ctx.fillStyle=p.stack?css('--land'):css(p.col);ctx.strokeStyle=css('--panel');ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,yOf(p,v),4.5,0,7);ctx.fill();ctx.stroke();}}
+}
+function showTip(i,px){const s=S[i],tip=$('tip');tip.textContent='';const add=(t,cls)=>{const d=document.createElement('div');if(cls)d.className=cls;d.textContent=t;tip.append(d);};
+  const h=document.createElement('div');const b=document.createElement('b');b.textContent=`#${s.issueNo}`;h.append(b,` ${s.date||''} ${s.edition==='morning'?'朝刊':s.edition==='midday'?'昼刊':''}`);tip.append(h);
+  add(`${fmt(s.gyr,2)} Gyr / 気温 ${fmt(s.T,1)}℃${s.snowball?'（全球凍結）':''}`);add(`CO2 ${co2txt(s.CO2)} / 酸素 ${fmt(s.O2,2)}`);add(`生き物 海 ${fmt(s.bioOcean,2)} 陸 ${fmt(s.bioLand,2)} / 系統 ${s.nSpecies}`);add(`最も複雑: ${CX[s.maxCx]||'生命なし'}`);
+  for(const e of s.events)if(!MINOR(e))add(e.t,'ev');
+  tip.hidden=false;const tw=tip.offsetWidth;tip.style.left=Math.min(Math.max(0,px+14),W-tw)+'px';tip.style.top='8px';}
+cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left;if(x<ML-4){hover=-1;$('tip').hidden=true;draw();return;}const i=Math.round((x-ML)/(W-ML-MR)*(S.length-1));hover=Math.max(0,Math.min(S.length-1,i));draw();showTip(hover,xOf(hover));});
+cv.addEventListener('pointerleave',()=>{hover=-1;$('tip').hidden=true;draw();});
+if(window.ResizeObserver)new ResizeObserver(layout).observe(cv.parentElement);layout();
+})();
+</script>

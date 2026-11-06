@@ -1,0 +1,19 @@
+{
+ "runs": 40,
+ "length": 1000,
+ "stats": {
+  "noLife": 0,
+  "sterileEnd": 5,
+  "frozenEnd": 0,
+  "hotEnd": 5,
+  "reachedCx3": 40,
+  "reachedCx4": 40,
+  "reachedMind": 3,
+  "landed": 40,
+  "goe": 40,
+  "monoculture": 0,
+  "stagnantTail": 0,
+  "snowballs": 170,
+  "mass": 197
+ }
+}
