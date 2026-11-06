@@ -1,0 +1,31 @@
+// 調整用の定数。各値に意味、単位、出典、状態（合意 / 論争 / 思弁）を付ける。
+// 状態「思弁」はゲームとしての調整値で、現実の値ではない。
+export const CONSTANTS = {
+  myrPerIssue:      { v: 20,      unit: '百万年/号',  note: '1号あたりの時間。238号で約48億年', src: 'ゲーム設計', status: '思弁' },
+  substeps:         { v: 20,      unit: '回/号',      note: '1号の中の計算回数（1回=100万年）', src: 'ゲーム設計', status: '思弁' },
+  T0:               { v: 255,     unit: 'K',          note: '地球の有効放射温度（L=1, A=0.3）', src: '教科書値（エネルギー収支）', status: '合意' },
+  greenhouse0:      { v: 33,      unit: '℃',          note: 'CO2 280ppm での温室効果', src: '教科書値', status: '合意' },
+  climateSens:      { v: 3,       unit: '℃/倍増',     note: 'CO2 倍増あたりの昇温', src: 'IPCC の中央値付近', status: '論争（幅 2.5〜4）' },
+  co2Ref:           { v: 280,     unit: 'ppm',        note: '基準 CO2', src: '産業革命前の値', status: '合意' },
+  sunL0:            { v: 0.70,    unit: '現在比',     note: '誕生時の太陽型恒星の明るさ（暗い太陽）', src: 'レポート: 約70%', status: '合意' },
+  sunBrighten:      { v: 0.075,   unit: '/10億年',    note: '太陽型恒星の増光率', src: 'レポート: 7〜10%/10億年', status: '合意' },
+  snowballEnter:    { v: -12,     unit: '℃',          note: 'これを下回ると全球凍結', src: 'ゲーム調整（アイスアルベドの暴走）', status: '思弁' },
+  snowballAlbedo:   { v: 0.62,    unit: '',           note: '全球凍結中のアルベド', src: '氷の反射率から', status: '思弁' },
+  weatherT:         { v: 0.07,    unit: '/℃',         note: '風化の温度感度（線形近似）', src: 'Walker 1981 の考え方', status: '論争（強さは不確か）' },
+  volcano0:         { v: 1,       unit: '相対',       note: '現在の火山 CO2 放出', src: '基準化', status: '思弁' },
+  ch4Warm:          { v: 12,      unit: '℃',          note: '酸素がない時代のメタン温室', src: '暗い太陽のパラドックスの解の一つ', status: '論争' },
+  o2Reservoir:      { v: 1.4,     unit: 'PAL 相当',   note: '酸素を吸い込む還元物質（鉄など）の初期量', src: 'ゲーム調整（大酸化イベントの時期）', status: '思弁' },
+  o2Prod:           { v: 0.0032,  unit: 'PAL/百万年', note: '光合成生物が満ちたときの酸素生産', src: 'ゲーム調整', status: '思弁' },
+  o2Decay:          { v: 0.004,   unit: '/百万年',    note: '酸化的風化などによる酸素の消費', src: 'ゲーム調整', status: '思弁' },
+  needO2:           { v: [0, 0, 0.01, 0.05, 0.12, 0.3], unit: 'PAL', note: '複雑さ1〜5に必要な酸素', src: 'レポート: 酸素の段階で大型動物が解禁', status: '論争（閾値は不確か）' },
+  daisyK:           { v: 0.003265, unit: '/℃²',       note: '成長率の温度依存（最適温度から外れると下がる）', src: 'Watson & Lovelock 1983', status: '合意（モデルとして）' },
+  deathRate:        { v: 0.075,   unit: '/百万年',    note: '基礎死亡率', src: 'Daisyworld の γ を時間刻みに合わせて調整', status: '思弁' },
+  speciation:       { v: 0.03,    unit: '/百万年',    note: '個体数1あたりの分岐確率', src: 'ゲーム調整', status: '思弁' },
+  abiogenesis:      { v: 0.004,   unit: '/百万年',    note: '条件が揃ったときの生命誕生確率', src: 'ゲーム調整（数億年で誕生）', status: '思弁' },
+  impactBase:       { v: 0.02,    unit: '/号',        note: '大きな隕石の基礎確率', src: 'レポート: 10km 級は約1億年に1回', status: '合意（桁）' },
+  impactPerGem:     { v: 0.07,    unit: '/号/gem',    note: 'gem 記事1本あたりの上乗せ', src: 'ゲーム設計', status: '思弁' },
+  lipHot:           { v: 82,      unit: '記事温度',   note: 'この平均温度を超える号で洪水玄武岩が起きうる', src: 'ゲーム設計', status: '思弁' },
+  superPeriod:      { v: 20,      unit: '号',         note: '超大陸サイクル（4億年）', src: 'レポート: 3〜5億年', status: '合意' },
+  maxSpecies:       { v: 48,      unit: '系統',       note: '同時に追う系統の上限', src: '計算量の都合', status: '思弁' },
+};
+export const C = Object.fromEntries(Object.entries(CONSTANTS).map(([k, o]) => [k, o.v]));

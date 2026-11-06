@@ -1,0 +1,171 @@
+<title>Times Garden 歴史の観測記録</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an observation log. Present-state tiles first, then stacked small-multiple timelines sharing one time axis, then the chronicle and the long-run test. Single deliberate dark world (night observatory), same tokens as earlier prototypes. */
+:root{
+  color-scheme:dark;
+  --bg:#0a0d14;--panel:#111621;--line:#232b3b;--grid:#1c2331;--fg:#e4e8f0;--muted:#8c95a8;--faint:#5d667a;
+  --accent:#e9b965;--ocean:#3987e5;--land:#199e70;--temp:#e9b965;--snow:#9fc6ff;--o2:#8fd6a8;--co2:#c9a6ff;
+  --font-display:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--font-body);font-size:14px;line-height:1.7}
+.wrap{max-width:1180px;margin:0 auto;padding-block:26px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+h1{font-family:var(--font-display);font-size:clamp(26px,4vw,38px);line-height:1.2;margin:0;text-wrap:balance}
+h2{font-size:11px;font-family:var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:500}
+.lead{margin:0;color:var(--muted);max-width:68ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:2px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted)}
+.tile .v{font-family:var(--font-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.3}
+.tile .s{font-size:11px;color:var(--faint);font-family:var(--font-mono)}
+.chartbox{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 14px 10px;display:grid;gap:8px;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.cwrap{position:relative;width:100%}
+#chart{display:block;width:100%;touch-action:pan-y}
+.tip{position:absolute;pointer-events:none;background:rgba(10,13,20,.94);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12px;min-width:180px;max-width:280px;display:grid;gap:2px}
+.tip b{font-family:var(--font-mono);font-weight:500}
+.tip .ev{color:var(--accent)}
+.cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:860px){.cols{grid-template-columns:minmax(0,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:10px;min-width:0}
+ol.chron{list-style:none;margin:0;padding:0;display:grid;gap:0;max-height:560px;overflow:auto}
+ol.chron li{display:grid;grid-template-columns:4.5em 5.5em 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--grid);font-size:13px}
+ol.chron .n{font-family:var(--font-mono);color:var(--accent);font-variant-numeric:tabular-nums}
+ol.chron .g{font-family:var(--font-mono);color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+ol.chron li.big .t{font-weight:700}
+.toggle{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+td{padding:5px 0;border-bottom:1px solid var(--grid);vertical-align:top}
+td.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:12px}
+.note{color:var(--muted);font-size:12px;margin:0;max-width:84ch}
+.ok{color:var(--o2)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Times Garden · 試作 04 · 生態系の核</div>
+    <h1>歴史の観測記録</h1>
+    <p class="lead">YZRS Times の号が出るたびに、架空の惑星の歴史が2,000万年ずつ進みます。記事の熱さは火山活動に、gem は隕石に、新しいキーワードは突然変異の起きやすさになります。この画面はブラウザで創刊号から全史を計算し直しています。</p>
+  </header>
+
+  <section aria-labelledby="nowH" style="display:grid;gap:10px">
+    <h2 id="nowH">いまの世界</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section class="chartbox" aria-labelledby="chH">
+    <h2 id="chH">号ごとの推移（横軸は号。上の金色の線は大きな出来事）</h2>
+    <div class="legend" id="legend"></div>
+    <div class="cwrap" id="cwrap"><canvas id="chart" aria-label="気温、CO2、酸素、生き物の量、系統数の推移"></canvas><div class="tip" id="tip" hidden></div></div>
+  </section>
+
+  <div class="cols">
+    <section class="box" aria-labelledby="chrH">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap"><h2 id="chrH">年表</h2>
+        <label class="toggle"><input type="checkbox" id="showMinor"> 小さな隕石と超大陸も表示</label></div>
+      <ol class="chron" id="chron"></ol>
+    </section>
+    <section class="box" aria-labelledby="soakH">
+      <h2 id="soakH">長期運転テスト</h2>
+      <p class="note" id="soakNote"></p>
+      <table id="soak"></table>
+      <h2 style="margin-top:8px">決定論の確認</h2>
+      <p class="note" id="det"></p>
+    </section>
+  </div>
+  <p class="note">試作です。気候と生命のルールは現実の研究をもとにした単純化で、数値の多くはゲームとしての調整値です（constants.mjs に出典と状態を記載）。</p>
+</div>
+
+<script>
+/*__SIM__*/
+const LEDGER=/*__LEDGER__*/;
+const SOAK=/*__SOAK__*/;
+const EXPECTED_HASH=/*__HASH__*/;
+(function(){
+"use strict";
+const t0=performance.now();
+const H=runHistory('times-garden-v1',LEDGER.issues);
+const ms=Math.round(performance.now()-t0);
+const S=H.snapshots,last=S[S.length-1];
+const $=id=>document.getElementById(id);
+const CX=['生命なし','微生物','真核生物','多細胞の生き物','大型の生き物','考える生き物'];
+const STAR={red:'赤色矮星',yellow:'黄色い恒星',blue:'青白い恒星'};
+const fmt=(v,d=1)=>Number(v).toFixed(d);
+function co2txt(v){return v>=10000?fmt(v/10000,1)+'%':Math.round(v)+'ppm';}
+// tiles
+const tiles=[['経過時間',`${fmt(last.gyr*10,1)} 億年`,`${S.length}号ぶん`],['気温',`${fmt(last.T,1)}℃`,last.snowball?'全球凍結中':''],['CO2',co2txt(last.CO2),''],['酸素',`${fmt(last.O2,2)}`,'現在の地球を1とした値'],
+  ['生き物の系統',`${last.nSpecies}`,`これまでの絶滅 ${last.extinctTotal}`],['最も複雑な生き物',CX[last.maxCx]||'—',''],['恒星',STAR[H.star],'']];
+const tb=$('tiles');for(const[k,v,s]of tiles){const d=document.createElement('div');d.className='tile';const a=document.createElement('span');a.className='k';a.textContent=k;const b=document.createElement('span');b.className='v';b.textContent=v;d.append(a,b);if(s){const c=document.createElement('span');c.className='s';c.textContent=s;d.append(c);}tb.append(d);}
+// chronicle
+const MINOR=e=>e.k==='super'||(e.k==='impact'&&e.size==='small');
+const BIG=new Set(['abio','goe','euk','multi','land','complex','mind','snowball','mass','sterile','oceanLost','abio2']);
+function renderChron(){const ol=$('chron');ol.textContent='';const all=$('showMinor').checked;
+  for(const s of S)for(const e of s.events){if(!all&&MINOR(e))continue;const li=document.createElement('li');if(BIG.has(e.k))li.className='big';
+    const n=document.createElement('span');n.className='n';n.textContent='#'+s.issueNo;const g=document.createElement('span');g.className='g';g.textContent=fmt(s.gyr,2)+' Gyr';const t=document.createElement('span');t.className='t';t.textContent=e.t+(s.date?`（${s.date}${s.edition==='morning'?' 朝刊':s.edition==='midday'?' 昼刊':''}）`:'');li.append(n,g,t);ol.append(li);}}
+$('showMinor').addEventListener('change',renderChron);renderChron();
+// soak
+const st=SOAK.stats,N=SOAK.runs,pc=v=>Math.round(v/N*100)+'%';
+$('soakNote').textContent=`合成の号で ${SOAK.length}号（約${fmt(SOAK.length*0.2,0)}億年ぶん）を、種を変えて${N}本回した結果。柱3「覗くたびに驚きがある」の確認用。`;
+const rows=[['生命が生まれなかった',pc(st.noLife)],['最後に全滅していた',pc(st.sterileEnd)],['最後の200号がずっと凍結',pc(st.frozenEnd)],['最後に灼熱（70℃超）',pc(st.hotEnd)],['大酸化イベントが起きた',pc(st.goe)],['陸上進出した',pc(st.landed)],['大型の生き物に到達',pc(st.reachedCx4)],['考える生き物に到達',pc(st.reachedMind)],['一種独占が続いた',pc(st.monoculture)],['最後の500号で大きな出来事なし',pc(st.stagnantTail)],['全球凍結（1本あたり）',fmt(st.snowballs/N,1)+'回'],['大量絶滅（1本あたり）',fmt(st.mass/N,1)+'回']];
+const T=$('soak');for(const[k,v]of rows){const tr=document.createElement('tr');const a=document.createElement('td');a.textContent=k;const b=document.createElement('td');b.className='num';b.textContent=v;tr.append(a,b);T.append(tr);}
+const hh=historyHash(H);$('det').innerHTML='';const p1=document.createElement('span');p1.textContent=`このブラウザで計算した全史のハッシュ ${hh.slice(0,12)}… は、Node で計算した値と`;const p2=document.createElement('b');p2.className=hh===EXPECTED_HASH?'ok':'';p2.textContent=hh===EXPECTED_HASH?'一致しました':'一致しませんでした';const p3=document.createElement('span');p3.textContent=`（計算時間 ${ms}ms）。`;$('det').append(p1,p2,p3);
+// chart
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const panels=[{k:'T',label:'気温（℃）',col:'--temp',min:Math.min(-30,...S.map(s=>s.T)),max:Math.max(40,...S.map(s=>s.T))},
+  {k:'CO2',label:'CO2（対数）',col:'--co2',log:true,min:10,max:Math.max(1e5,...S.map(s=>s.CO2))},
+  {k:'O2',label:'酸素（現在の地球=1）',col:'--o2',min:0,max:Math.max(1,...S.map(s=>s.O2))},
+  {k:'bio',label:'生き物の量',stack:true,min:0,max:Math.max(1,...S.map(s=>s.bioOcean+s.bioLand))},
+  {k:'nSpecies',label:'系統数',col:'--accent',min:0,max:50}];
+$('legend').innerHTML='';[['気温','--temp'],['全球凍結の期間','--snow'],['CO2','--co2'],['酸素','--o2'],['海の生き物','--ocean'],['陸の生き物','--land'],['系統数','--accent']].forEach(([n,c])=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=css(c);s.append(i,n);$('legend').append(s);});
+const cv=$('chart'),ctx=cv.getContext('2d');let W=0,Hh=0,dpr=1,hover=-1;const ML=118,MR=14,MT=26,GAP=16;
+const majors=[];S.forEach((s,i)=>s.events.forEach(e=>{if(BIG.has(e.k))majors.push({i,e});}));
+function layout(){const r=cv.parentElement.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);W=r.width;const ph=Math.max(64,Math.min(96,W*.09));Hh=MT+panels.length*(ph+GAP)+22;cv.style.height=Hh+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(Hh*dpr);panels.forEach((p,j)=>{p.y=MT+j*(ph+GAP);p.h=ph;});draw();}
+const xOf=i=>ML+(W-ML-MR)*(S.length<2?0:i/(S.length-1));
+function yOf(p,v){let a=p.min,b=p.max,x=v;if(p.log){a=Math.log10(a);b=Math.log10(b);x=Math.log10(Math.max(v,p.min));}return p.y+p.h-(x-a)/(b-a)*p.h;}
+function draw(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,Hh);ctx.font='12px "Zen Kaku Gothic New",system-ui,sans-serif';
+  // event markers
+  ctx.strokeStyle='rgba(233,185,101,.28)';ctx.lineWidth=1;for(const m of majors){const x=Math.round(xOf(m.i))+.5;ctx.beginPath();ctx.moveTo(x,MT-8);ctx.lineTo(x,Hh-22);ctx.stroke();ctx.fillStyle=css('--accent');ctx.beginPath();ctx.arc(x,MT-10,2.5,0,7);ctx.fill();}
+  for(const p of panels){ctx.fillStyle=css('--muted');ctx.textBaseline='middle';ctx.textAlign='left';ctx.fillText(p.label,0,p.y+10);
+    ctx.strokeStyle=css('--grid');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ML,p.y+p.h+.5);ctx.lineTo(W-MR,p.y+p.h+.5);ctx.stroke();
+    // ticks
+    ctx.fillStyle=css('--faint');ctx.font='11px "IBM Plex Mono",monospace';ctx.textAlign='right';
+    const ticks=p.log?[100,1e4,1e6].filter(v=>v>=p.min&&v<=p.max):[p.min,p.max];for(const v of ticks){const y=yOf(p,v);ctx.fillText(p.log?(v>=1e4?(v/1e4)+'%':v+'ppm'):fmt(v,p.k==='O2'?1:0),ML-6,y);ctx.strokeStyle=css('--grid');ctx.beginPath();ctx.moveTo(ML,Math.round(y)+.5);ctx.lineTo(W-MR,Math.round(y)+.5);ctx.stroke();}
+    if(p.k==='T'){ // snowball bands and zero line
+      ctx.fillStyle='rgba(159,198,255,.16)';S.forEach((s,i)=>{if(s.snowball){const x0=xOf(Math.max(0,i-.5)),x1=xOf(Math.min(S.length-1,i+.5));ctx.fillRect(x0,p.y,x1-x0,p.h);}});
+      const y0=yOf(p,0);ctx.setLineDash([3,3]);ctx.strokeStyle=css('--faint');ctx.beginPath();ctx.moveTo(ML,y0);ctx.lineTo(W-MR,y0);ctx.stroke();ctx.setLineDash([]);ctx.fillText('0℃',ML-6,y0);}
+    ctx.font='12px "Zen Kaku Gothic New",system-ui,sans-serif';
+    if(p.stack){ // stacked area: ocean then land, 2px gap
+      const area=(lo,hi,col)=>{ctx.fillStyle=col;ctx.beginPath();S.forEach((s,i)=>{const x=xOf(i),y=yOf(p,hi(s));i?ctx.lineTo(x,y):ctx.moveTo(x,y);});for(let i=S.length-1;i>=0;i--)ctx.lineTo(xOf(i),yOf(p,lo(S[i])));ctx.closePath();ctx.fill();};
+      area(()=>0,s=>s.bioOcean,css('--ocean'));area(s=>s.bioOcean,s=>s.bioOcean+s.bioLand,css('--land'));
+      ctx.strokeStyle=css('--panel');ctx.lineWidth=2;ctx.beginPath();S.forEach((s,i)=>{const x=xOf(i),y=yOf(p,s.bioOcean);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+      // direct labels at the right end
+      const L=S[S.length-1];ctx.textAlign='right';ctx.fillStyle=css('--fg');if(L.bioOcean>0.05)ctx.fillText('海',W-MR-4,yOf(p,L.bioOcean/2));if(L.bioLand>0.05)ctx.fillText('陸',W-MR-4,yOf(p,L.bioOcean+L.bioLand/2));}
+    else{ctx.strokeStyle=css(p.col);ctx.lineWidth=2;ctx.lineJoin='round';ctx.beginPath();S.forEach((s,i)=>{const x=xOf(i),y=yOf(p,s[p.k]);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}}
+  // x axis
+  ctx.fillStyle=css('--faint');ctx.font='11px "IBM Plex Mono",monospace';ctx.textAlign='center';ctx.textBaseline='alphabetic';
+  const step=S.length>150?50:20;for(let n=step;n<=S.length;n+=step){const i=S.findIndex(s=>s.issueNo>=n);if(i>=0)ctx.fillText('#'+S[i].issueNo,xOf(i),Hh-6);}
+  ctx.textAlign='left';ctx.fillText('#1',ML,Hh-6);
+  if(hover>=0){const x=xOf(hover);ctx.strokeStyle=css('--fg');ctx.globalAlpha=.5;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,MT);ctx.lineTo(x,Hh-22);ctx.stroke();ctx.globalAlpha=1;
+    for(const p of panels){const s=S[hover];const v=p.stack?s.bioOcean+s.bioLand:s[p.k];ctx.fillStyle=p.stack?css('--land'):css(p.col);ctx.strokeStyle=css('--panel');ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,yOf(p,v),4.5,0,7);ctx.fill();ctx.stroke();}}
+}
+function showTip(i,px){const s=S[i],tip=$('tip');tip.textContent='';const add=(t,cls)=>{const d=document.createElement('div');if(cls)d.className=cls;d.textContent=t;tip.append(d);};
+  const h=document.createElement('div');const b=document.createElement('b');b.textContent=`#${s.issueNo}`;h.append(b,` ${s.date||''} ${s.edition==='morning'?'朝刊':s.edition==='midday'?'昼刊':''}`);tip.append(h);
+  add(`${fmt(s.gyr,2)} Gyr / 気温 ${fmt(s.T,1)}℃${s.snowball?'（全球凍結）':''}`);add(`CO2 ${co2txt(s.CO2)} / 酸素 ${fmt(s.O2,2)}`);add(`生き物 海 ${fmt(s.bioOcean,2)} 陸 ${fmt(s.bioLand,2)} / 系統 ${s.nSpecies}`);add(`最も複雑: ${CX[s.maxCx]||'生命なし'}`);
+  for(const e of s.events)if(!MINOR(e))add(e.t,'ev');
+  tip.hidden=false;const tw=tip.offsetWidth;tip.style.left=Math.min(Math.max(0,px+14),W-tw)+'px';tip.style.top='8px';}
+cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left;if(x<ML-4){hover=-1;$('tip').hidden=true;draw();return;}const i=Math.round((x-ML)/(W-ML-MR)*(S.length-1));hover=Math.max(0,Math.min(S.length-1,i));draw();showTip(hover,xOf(hover));});
+cv.addEventListener('pointerleave',()=>{hover=-1;$('tip').hidden=true;draw();});
+if(window.ResizeObserver)new ResizeObserver(layout).observe(cv.parentElement);layout();
+})();
+</script>
