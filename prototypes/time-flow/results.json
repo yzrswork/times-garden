@@ -1,0 +1,375 @@
+{
+ "eco-1": {
+  "note": "いまの本番。いつも2000万年",
+  "history": {
+   "milestones": {
+    "abio": 6,
+    "goe": 42,
+    "multi": 68,
+    "land": 69,
+    "complex": 165,
+    "mind": null,
+    "sterile": [
+     82
+    ]
+   },
+   "notable": 17,
+   "at263": {
+    "gyr": 5.26,
+    "T": 29.8941,
+    "CO2": 10,
+    "nSpecies": 48,
+    "maxCx": 4
+   }
+  },
+  "future": {
+   "alive1y": 0,
+   "alive2y": 0,
+   "alive5y": 0,
+   "mind": 3,
+   "of": 20,
+   "medianLastAliveDay": 199,
+   "perDayY1": {
+    "events": 0.0643835616438356,
+    "born": 11.362328767123284,
+    "died": 0.822054794520548
+   },
+   "perDayY3to5": {
+    "events": 0.053972602739726025,
+    "born": 0,
+    "died": 0
+   },
+   "medianGyr1y": 19.86,
+   "medianT1y": 186.3534
+  },
+  "soak": {
+   "alive1y": 33,
+   "alive2y": 27,
+   "alive5y": 9,
+   "complex": 40,
+   "mind": 5,
+   "of": 40,
+   "perDayY1": {
+    "events": 0.22095890410958904,
+    "born": 15.06041095890411,
+    "died": 0.8882191780821922
+   },
+   "perDayY3to5": {
+    "events": 0.16000000000000003,
+    "born": 4.111187214611872,
+    "died": 0.2160958904109589
+   }
+  }
+ },
+ "A": {
+  "note": "大型の生き物が現れたら100万年",
+  "history": {
+   "milestones": {
+    "abio": 6,
+    "goe": 42,
+    "multi": 68,
+    "land": 69,
+    "complex": 165,
+    "mind": null,
+    "sterile": [
+     82,
+     231
+    ]
+   },
+   "notable": 19,
+   "at263": {
+    "gyr": 3.398,
+    "T": 28.6572,
+    "CO2": 225,
+    "nSpecies": 0,
+    "maxCx": 0
+   }
+  },
+  "future": {
+   "alive1y": 20,
+   "alive2y": 20,
+   "alive5y": 20,
+   "mind": 0,
+   "of": 20,
+   "medianLastAliveDay": 1825,
+   "perDayY1": {
+    "events": 0.007534246575342468,
+    "born": 0.6236986301369865,
+    "died": 0.059589041095890416
+   },
+   "perDayY3to5": {
+    "events": 0.0029223744292237444,
+    "born": 1.499908675799087,
+    "died": 0.05817351598173515
+   },
+   "medianGyr1y": 4.128,
+   "medianT1y": 25.7073
+  },
+  "soak": {
+   "alive1y": 37,
+   "alive2y": 39,
+   "alive5y": 35,
+   "complex": 40,
+   "mind": 1,
+   "of": 40,
+   "perDayY1": {
+    "events": 0.09678082191780821,
+    "born": 5.055958904109589,
+    "died": 0.3703424657534248
+   },
+   "perDayY3to5": {
+    "events": 0.010799086757990866,
+    "born": 0.8282191780821918,
+    "died": 0.052511415525114145
+   }
+  }
+ },
+ "B": {
+  "note": "段階ごとに細かく",
+  "history": {
+   "milestones": {
+    "abio": 6,
+    "goe": 93,
+    "multi": 168,
+    "land": 168,
+    "complex": null,
+    "mind": null,
+    "sterile": [
+     231
+    ]
+   },
+   "notable": 12,
+   "at263": {
+    "gyr": 2.12,
+    "T": 23.7541,
+    "CO2": 639,
+    "nSpecies": 1,
+    "maxCx": 1
+   }
+  },
+  "future": {
+   "alive1y": 20,
+   "alive2y": 20,
+   "alive5y": 20,
+   "mind": 0,
+   "of": 20,
+   "medianLastAliveDay": 1825,
+   "perDayY1": {
+    "events": 0.013561643835616435,
+    "born": 3.0924657534246576,
+    "died": 0.1582191780821918
+   },
+   "perDayY3to5": {
+    "events": 0.002876712328767124,
+    "born": 1.4658447488584474,
+    "died": 0.058310502283105005
+   },
+   "medianGyr1y": 3.681,
+   "medianT1y": 22.1428
+  },
+  "soak": {
+   "alive1y": 34,
+   "alive2y": 40,
+   "alive5y": 36,
+   "complex": 40,
+   "mind": 0,
+   "of": 40,
+   "perDayY1": {
+    "events": 0.07041095890410959,
+    "born": 2.637054794520548,
+    "died": 0.2551369863013699
+   },
+   "perDayY3to5": {
+    "events": 0.012671232876712327,
+    "born": 0.9987442922374429,
+    "died": 0.06221461187214612
+   }
+  }
+ },
+ "D1": {
+  "note": "#264 から100万年（#263 までは本番と同じ）",
+  "history": {
+   "milestones": {
+    "abio": 6,
+    "goe": 42,
+    "multi": 68,
+    "land": 69,
+    "complex": 165,
+    "mind": null,
+    "sterile": [
+     82
+    ]
+   },
+   "notable": 17,
+   "at263": {
+    "gyr": 5.26,
+    "T": 29.8941,
+    "CO2": 10,
+    "nSpecies": 48,
+    "maxCx": 4
+   }
+  },
+  "future": {
+   "alive1y": 20,
+   "alive2y": 20,
+   "alive5y": 20,
+   "mind": 2,
+   "of": 20,
+   "medianLastAliveDay": 1825,
+   "perDayY1": {
+    "events": 0.00410958904109589,
+    "born": 1.4997260273972601,
+    "died": 0.07657534246575341
+   },
+   "perDayY3to5": {
+    "events": 0.0028310502283105023,
+    "born": 1.4705022831050227,
+    "died": 0.055981735159817345
+   },
+   "medianGyr1y": 5.99,
+   "medianT1y": 33.4412
+  },
+  "soak": {
+   "alive1y": 36,
+   "alive2y": 39,
+   "alive5y": 36,
+   "complex": 32,
+   "mind": 0,
+   "of": 40,
+   "perDayY1": {
+    "events": 0.09534246575342466,
+    "born": 5.209383561643834,
+    "died": 0.35095890410958896
+   },
+   "perDayY3to5": {
+    "events": 0.010936073059360727,
+    "born": 0.8237899543378996,
+    "died": 0.05566210045662099
+   }
+  }
+ },
+ "D2": {
+  "note": "#264 から200万年（#263 までは本番と同じ）",
+  "history": {
+   "milestones": {
+    "abio": 6,
+    "goe": 42,
+    "multi": 68,
+    "land": 69,
+    "complex": 165,
+    "mind": null,
+    "sterile": [
+     82
+    ]
+   },
+   "notable": 17,
+   "at263": {
+    "gyr": 5.26,
+    "T": 29.8941,
+    "CO2": 10,
+    "nSpecies": 48,
+    "maxCx": 4
+   }
+  },
+  "future": {
+   "alive1y": 20,
+   "alive2y": 20,
+   "alive5y": 16,
+   "mind": 5,
+   "of": 20,
+   "medianLastAliveDay": 1825,
+   "perDayY1": {
+    "events": 0.0061643835616438354,
+    "born": 2.9656164383561645,
+    "died": 0.11616438356164382
+   },
+   "perDayY3to5": {
+    "events": 0.006894977168949772,
+    "born": 1.5527397260273976,
+    "died": 0.15529680365296808
+   },
+   "medianGyr1y": 6.72,
+   "medianT1y": 36.6283
+  },
+  "soak": {
+   "alive1y": 35,
+   "alive2y": 37,
+   "alive5y": 36,
+   "complex": 38,
+   "mind": 0,
+   "of": 40,
+   "perDayY1": {
+    "events": 0.10253424657534246,
+    "born": 5.684383561643835,
+    "died": 0.3823287671232876
+   },
+   "perDayY3to5": {
+    "events": 0.020045662100456614,
+    "born": 1.657123287671233,
+    "died": 0.09710045662100454
+   }
+  }
+ },
+ "D5": {
+  "note": "#264 から500万年（#263 までは本番と同じ）",
+  "history": {
+   "milestones": {
+    "abio": 6,
+    "goe": 42,
+    "multi": 68,
+    "land": 69,
+    "complex": 165,
+    "mind": null,
+    "sterile": [
+     82
+    ]
+   },
+   "notable": 17,
+   "at263": {
+    "gyr": 5.26,
+    "T": 29.8941,
+    "CO2": 10,
+    "nSpecies": 48,
+    "maxCx": 4
+   }
+  },
+  "future": {
+   "alive1y": 20,
+   "alive2y": 19,
+   "alive5y": 0,
+   "mind": 5,
+   "of": 20,
+   "medianLastAliveDay": 800.5,
+   "perDayY1": {
+    "events": 0.01493150684931507,
+    "born": 7.3576712328767115,
+    "died": 0.2879452054794521
+   },
+   "perDayY3to5": {
+    "events": 0.016712328767123287,
+    "born": 0.16328767123287674,
+    "died": 0.06940639269406393
+   },
+   "medianGyr1y": 8.91,
+   "medianT1y": 48.2884
+  },
+  "soak": {
+   "alive1y": 35,
+   "alive2y": 37,
+   "alive5y": 35,
+   "complex": 40,
+   "mind": 2,
+   "of": 40,
+   "perDayY1": {
+    "events": 0.12472602739726027,
+    "born": 7.326027397260273,
+    "died": 0.4933561643835616
+   },
+   "perDayY3to5": {
+    "events": 0.04406392694063927,
+    "born": 4.091324200913242,
+    "died": 0.1799086757990867
+   }
+  }
+ }
+}
