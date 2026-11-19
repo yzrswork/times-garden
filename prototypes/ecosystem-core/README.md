@@ -8,7 +8,7 @@ YZRS Times の号を入力にして、惑星と生き物が互いを変え合う
 
 ```text
 node ledger.mjs <graph.json> ledger.json   # 入力台帳を作る（既存の号は凍結、新しい号だけ追記）
-node run.mjs                                # 実データの全史、決定論テスト、長期運転テスト（history.json, soak.json）
+SOAK_LEN=1000 node run.mjs                  # 実データの全史、決定論テスト、長期運転テスト（history.json, soak.json）。既定は2000号なので、下の結果（1000号）と同じにするには SOAK_LEN=1000 を付ける
 node build.mjs                              # viewer.html に計算コードと台帳を埋め込んで index.html を作る
 ```
 

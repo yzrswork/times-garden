@@ -31,7 +31,10 @@ if [ -z "$(git status --porcelain -- data)" ]; then note "data/ に変更なし�
 if [ "$after" -eq $((before + 1)) ]; then msg="台帳に #$after を取り込み、data/ を更新"
 elif [ "$after" -gt "$before" ]; then msg="台帳に #$((before + 1))〜#$after を取り込み、data/ を更新"
 else msg="data/ を作り直し（計算のきまりの変更）"; fi
+# 取り込んだ号で起きたことを、コミットメッセージの本文と概要に残す（見る画面ができるまでの記録を兼ねる）
+events="$(node pipeline/report.mjs "$before")"
 git add data
-git commit -q -m "$msg"
+git commit -q -m "$msg" -m "$events"
 note "コミット: $msg"
+note "$events"
 if [ "${PUSH:-1}" = 1 ]; then git push -q origin HEAD:main; note "main へ push した"; fi

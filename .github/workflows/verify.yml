@@ -23,3 +23,16 @@ jobs:
           node-version: 24
       - run: npm test
       - run: node pipeline/advance.mjs --check
+
+  # ブラウザ（Chromium）で data/ から全史を組み立て、Node の結果とハッシュが一致するか（決定論の確認）
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm install --no-save --no-audit --no-fund playwright@1.63.0
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/browser.mjs
