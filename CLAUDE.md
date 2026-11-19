@@ -52,10 +52,13 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 
 ## Git
 
-- 作業は `claude/<slug>` ブランチで行い、PR で main に入れる。main へ直接 push しない。
+- main へ直接 push してよい（2026-11-19 Owner 判断。PR が増えすぎるため）。Claude の作業も、GitHub Actions の毎日の更新（台帳と `data/`）も同じ。PR は Owner に頼まれたときだけ作る。
+- push の前に `npm test` と `node pipeline/advance.mjs --check` を通す。force push はしない。
 - GitHub Pages の公開設定と公開範囲の変更は Owner が決める。
 
 ## 更新ログ
+
+- 2026-11-19 (2) Git の節を、main へ直接 push する方式に変更（Owner 判断）。
 
 - 2026-11-19 本番のコード（`engine/`、`pipeline/`、`data/`）の節と、確認の手順を追加。
 - 2026-11-05 初版。Claude-Code-Game-Studios（MIT）の考え方の一部（柱、アートバイブル、試作の規律、確認できなかった状態の扱い、回帰テスト、長期運転テスト）を参考に、このプロジェクト向けに書き直した。
