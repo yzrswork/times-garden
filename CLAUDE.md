@@ -8,6 +8,11 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 - `docs/art-bible.md`: 見た目の基準。
 - 構想の経緯と確定事項の正は Vault（`yzrswork/obsidian-vault`）の `_ai-logs/2026-11-05_times-garden-handover.md`。このリポジトリと食い違うときは handover を確認し、Owner に確かめる。
 
+## 本番のコード
+
+- 計算は `engine/`（Node とブラウザで共通）、取り込みと公開データの更新は `pipeline/`、公開データは `data/`。構成は `README.md`。
+- 計算を変えたら `engine/world.mjs` の `SIM_VERSION` を上げる。定数を変えると `RULES_HASH` が自動で変わる。どちらも `node pipeline/advance.mjs` で `data/` を作り直す。
+
 ## データ
 
 - 入力は `yzrswork-site` が公開する `public/data/graph.json` だけ。`yzrs-times` と `yzrswork-site` には手を入れない。
@@ -22,6 +27,7 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 - シミュレーションでは `Math.random()` を使わない。乱数は種から作る（cyrb128 で種をハッシュし、sfc32 などで生成）。
 - シミュレーションの計算では、エンジン間で結果がずれうる `Math.sin`、`Math.cos`、`Math.exp`、`Math.pow` に頼らない。整数、四則演算、`Math.sqrt`、事前の表で書く。描画側では使ってよい。
 - 状態のハッシュを出せるようにし、決定論のテストで比べる。
+- 本番のコードを変えたら、`npm test` と `node pipeline/advance.mjs --check` を通す。
 
 ## 定数
 
@@ -51,4 +57,5 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 
 ## 更新ログ
 
+- 2026-11-19 本番のコード（`engine/`、`pipeline/`、`data/`）の節と、確認の手順を追加。
 - 2026-11-05 初版。Claude-Code-Game-Studios（MIT）の考え方の一部（柱、アートバイブル、試作の規律、確認できなかった状態の扱い、回帰テスト、長期運転テスト）を参考に、このプロジェクト向けに書き直した。

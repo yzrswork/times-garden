@@ -1,0 +1,17 @@
+{
+ "format": "times-garden-manifest/1",
+ "simVersion": "eco-1",
+ "rulesHash": "06dd2e4f42282992c222433afb3d103c",
+ "seed": "times-garden-v1",
+ "every": 50,
+ "ledgerCount": 238,
+ "lastIssueNo": 238,
+ "checkpoints": [
+  50,
+  100,
+  150,
+  200
+ ],
+ "historyHash": "1bace83ddb19e8b82ae6896d09638974",
+ "stateHash": "53667e18b857ab145291b8f9333b543f"
+}
