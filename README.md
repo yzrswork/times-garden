@@ -19,6 +19,11 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
   - `config.mjs`: 運用の設定（途中経過の間隔、主役の惑星の種）。
   - `daily.sh`: 毎日の更新（graph.json の取得、追記、`data/` の更新、テスト、main へ push）。
   - `report.mjs`: 新しく取り込んだ号で起きた出来事と、いまの惑星の様子を書き出す。毎日の更新のコミットメッセージと実行結果の概要に使う（見る画面ができるまでの記録を兼ねる）。
+- `viewer/`: 見る画面（ブラウザだけ。`index.html` から読む）。
+  - `palette.mjs`: 恒星ごとの色の体系（役割ごとに割り当てる。生の乱数で色を作らない）。
+  - `draw.mjs`: 生き物の姿を SVG で描く。形は環境と系統の理由だけで決める。
+  - `bestiary.mjs`: 図鑑のページ。公開データから世界を組み立て、いま生きている系統を並べる。
+- `index.html`: 図鑑のページ（GitHub Pages のルート）。
 - `.github/workflows/`: GitHub Actions。`update.yml` は毎日の更新、`verify.yml` は push のたびの確認。
 - `data/`: 公開データ。
   - `ledger.json`: 入力台帳。
@@ -36,6 +41,7 @@ node pipeline/ingest.mjs <graph.json>     # 新しい号を台帳に追記する
 node pipeline/advance.mjs                 # data/ を台帳に合わせる（--check で照合だけ）
 node tests/browser.mjs                    # Chromium で data/ から全史を組み立て、Node と比べる（Playwright が必要）
 node tests/soak.mjs [本数] [号数]         # 長期運転テストの報告（既定は40本 x 1000号）
+python3 -m http.server 8000               # 図鑑のページを見る（http://localhost:8000/）
 ```
 
 graph.json は `yzrswork-site` の公開データ（`https://raw.githubusercontent.com/yzrswork/yzrswork-site/main/public/data/graph.json`）。Times 側には何も書き込まない。
@@ -63,6 +69,7 @@ graph.json は `yzrswork-site` の公開データ（`https://raw.githubuserconte
 
 ## 更新ログ
 
+- 2026-11-19 (3) 見る画面を図鑑から始めた（`index.html`、`viewer/`）。いま生きている系統の姿を SVG で描き、惑星の様子と最近の出来事を添える。パソコンとスマホの幅で確認した。
 - 2026-11-19 (2) 見た目の層（`engine/traits.mjs`、`eco-2`）を追加。`docs/creatures.md` の実装の段階1のうち、系統の見た目の性質と受け継ぎ、惑星の重力と大気、いま生きている系統の図鑑（姿）まで。歴史は変えていない。
 
 - 2026-11-19 本番のコードを作成。試作04の計算と試作05の途中経過を書き直した。試作04と、実データ238号と合成の号60本 x 2,000号（3種類の恒星を含む、計12万号）で、毎号の記録、出来事、最後の状態がビット単位で一致することを確かめた。graph.json の変換も、試作04の `ledger.mjs` と全263号で一致。

@@ -161,26 +161,29 @@ function placeJa(s) {
   return d ? `海の${describeTrait('depth', d)}ところ` : '海';
 }
 
-// 図鑑の1行ぶんの姿（名前は段階1では付かない。docs/creatures.md 確定事項10 は記事キーワードが要る）。
+// 姿の特徴だけを並べる（複雑さ、場所、大きさは入れない。呼ぶ側がどう見せるか決める）。
 // 体を持たない系統（単細胞）には、体の覆いや左右の非対称を書かない。
-export function describeLook(s, W) {
+export function lookParts(s) {
   const L = s.look ?? {};
   const parts = [];
   if (s.cx < C.lookCxForm) {
-    parts.push(CX_JA[s.cx] || '生き物');
     if (L.pattern && L.pattern !== 'plain') parts.push(describeTrait('pattern', L.pattern));
-  } else {
-    parts.push(describeTrait('form', L.form));
-    if (L.cover !== 'bare') parts.push(describeTrait('cover', L.cover));
-    if (L.eyeKind && L.eyeKind !== 'none') parts.push(`${describeTrait('eyeKind', L.eyeKind)}が${L.eyeN}つ`);
-    else parts.push('目なし');
-    if (L.limb && L.limb !== 'none') parts.push(`${describeTrait('limb', L.limb)}が${L.limbN}本`);
-    if (L.pattern && L.pattern !== 'plain') parts.push(describeTrait('pattern', L.pattern));
-    if (L.asym) parts.push('左右が非対称');
+    return parts;
   }
-  parts.push(placeJa(s));
-  parts.push(sizeLabel(bodySize(s, W)));
-  return parts.join('、');
+  parts.push(describeTrait('form', L.form));
+  if (L.cover !== 'bare') parts.push(describeTrait('cover', L.cover));
+  if (L.eyeKind && L.eyeKind !== 'none') parts.push(`${describeTrait('eyeKind', L.eyeKind)}が${L.eyeN}つ`);
+  else parts.push('目なし');
+  if (L.limb && L.limb !== 'none') parts.push(`${describeTrait('limb', L.limb)}が${L.limbN}本`);
+  if (L.pattern && L.pattern !== 'plain') parts.push(describeTrait('pattern', L.pattern));
+  if (L.asym) parts.push('左右が非対称');
+  return parts;
+}
+
+// 図鑑の1行ぶんの姿、全文（名前は段階1では付かない。docs/creatures.md 確定事項10 は記事キーワードが要る）。
+export function describeLook(s, W) {
+  const head = s.cx < C.lookCxForm ? [CX_JA[s.cx] || '生き物'] : [];
+  return [...head, ...lookParts(s), placeJa(s), sizeLabel(bodySize(s, W))].join('、');
 }
 
 // いま生きている系統の図鑑（姿だけ。名前と「似ている一言」は段階1より後）。
@@ -190,6 +193,7 @@ export function bestiary(W) {
     .map(s => ({
       id: s.id, parent: s.parent, born: s.born, cx: s.cx, hab: s.hab,
       look: { ...(s.look ?? {}) }, size: bodySize(s, W), sizeLabel: sizeLabel(bodySize(s, W)),
-      color: bodyColor(s, W), text: describeLook(s, W),
+      sizeStep: SIZE_LABELS.findIndex(x => bodySize(s, W) < x.upTo),
+      color: bodyColor(s, W), traits: lookParts(s), place: placeJa(s), text: describeLook(s, W),
     }));
 }

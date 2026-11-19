@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Times Garden 観測記録</title>
+<style>
+  :root { --bg: #0a0f16; --panel: #121a24; --text: #e3edf5; --dim: #86979f; --accent: #8fd3f0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--text);
+    font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; line-height: 1.7;
+    font-feature-settings: "palt"; }
+  main { max-width: 1040px; margin: 0 auto; }
+  h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: .14em; margin: 0 0 16px; }
+  h2 { font-size: .9rem; font-weight: 600; letter-spacing: .1em; color: var(--dim);
+    margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 12px; margin: 0; }
+  .facts dt { font-size: .7rem; color: var(--dim); letter-spacing: .08em; }
+  .facts dd { margin: 0 0 8px; font-size: .9rem;
+    font-variant-numeric: tabular-nums; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .log ul, .problems { list-style: none; padding: 0; margin: 0; }
+  .log li { font-size: .85rem; color: var(--text); padding: 2px 0; }
+  .log li::before { content: "·"; color: var(--accent); margin-right: 8px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 10px;
+    padding: 10px 12px 12px; }
+  .art { display: flex; justify-content: center; }
+  .art svg { width: 100%; height: auto; max-width: 132px; }
+  .cx { margin: 2px 0 4px; font-size: .74rem; color: var(--accent); letter-spacing: .04em; }
+  .look { margin: 0 0 6px; font-size: .78rem; }
+  .meta, .dim { margin: 0; font-size: .7rem; color: var(--dim);
+    font-variant-numeric: tabular-nums; }
+  footer { margin-top: 32px; }
+  .problems li { font-size: .74rem; color: #e0a26a; }
+  .loading { color: var(--dim); font-size: .85rem; }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .facts { grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .facts dt { font-size: .66rem; }
+    .facts dd { font-size: .82rem; margin-bottom: 6px; }
+  }
+</style>
+</head>
+<body>
+<main id="app"><p class="loading">公開データを読んでいます…</p></main>
+<script type="module">
+  import { load, render } from './viewer/bestiary.mjs';
+  const app = document.getElementById('app');
+  try { render(app, await load()); }
+  catch (e) { app.textContent = '組み立てに失敗しました: ' + (e?.message ?? e); console.error(e); }
+</script>
+</body>
+</html>
