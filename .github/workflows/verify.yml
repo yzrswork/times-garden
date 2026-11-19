@@ -1,0 +1,25 @@
+# push のたびの確認。main へ直接 push する方式なので、push のあとにもテストと data/ の照合を回す。
+name: 確認
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm test
+      - run: node pipeline/advance.mjs --check

@@ -16,6 +16,8 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
   - `ingest.mjs`: 入力台帳に新しい号を追記する。取り込んだ号は凍結し、疑わしい号から先は追記しない。
   - `advance.mjs`: 台帳から途中経過、観測データ、manifest を作って `data/` に書く。毎回創刊号から計算し直し、保存済みのファイルと照らし合わせる。
   - `config.mjs`: 運用の設定（途中経過の間隔、主役の惑星の種）。
+  - `daily.sh`: 毎日の更新（graph.json の取得、追記、`data/` の更新、テスト、main へ push）。
+- `.github/workflows/`: GitHub Actions。`update.yml` は毎日の更新、`verify.yml` は push のたびの確認。
 - `data/`: 公開データ。
   - `ledger.json`: 入力台帳。
   - `checkpoints/NNNNN.json`: NNNNN号目まで計算した状態（途中経過）。50号ごと。
@@ -35,6 +37,13 @@ node tests/soak.mjs [本数] [号数]         # 長期運転テストの報告�
 ```
 
 graph.json は `yzrswork-site` の公開データ（`https://raw.githubusercontent.com/yzrswork/yzrswork-site/main/public/data/graph.json`）。Times 側には何も書き込まない。
+
+## 毎日の更新（GitHub Actions）
+
+- `update.yml` が毎日 8:43 と 14:43（日本時間。朝刊と昼刊が出たあと）に `pipeline/daily.sh` を動かす。graph.json を取得し、台帳に新しい号を追記し、`data/` を更新し、`npm test` と `advance.mjs --check` を通してから main へ直接 push する。Actions の画面から手で動かすこともできる（workflow_dispatch）。
+- どこかで失敗したら何も push しない（Fail Closed）。世界はその号の手前で止まり、壊れない。失敗は GitHub から通知が届く。原因を直せば、次の実行でまとめて取り込む。
+- 手元で試すときは `PUSH=0 bash pipeline/daily.sh [graph.json のパス]`（コミットまでして push しない）。
+- `verify.yml` は push のたびに `npm test` と `advance.mjs --check` を回す。Actions 自身の push では動かない（GitHub の仕様）。
 
 ## 仕組み
 

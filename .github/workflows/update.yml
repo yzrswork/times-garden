@@ -1,0 +1,35 @@
+# 毎日の更新: yzrswork-site の公開データ graph.json を読み、台帳と data/ を更新して main へ push する。
+# 処理の本体は pipeline/daily.sh。失敗したら何も push しない（Fail Closed）。Times 側には何も書き込まない。
+name: 毎日の更新
+
+on:
+  schedule:
+    - cron: "43 23 * * *" # 毎日 8:43 JST（朝刊 5:17、補習 7:47 のあと）
+    - cron: "43 5 * * *"  # 毎日 14:43 JST（昼刊 11:47、補習 13:17 のあと）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: 取り込み、data/ の更新、テスト、main へ push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bash pipeline/daily.sh
