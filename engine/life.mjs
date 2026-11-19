@@ -3,6 +3,7 @@ import { C } from './constants.mjs';
 import { clamp } from './math.mjs';
 import { gauss } from './random.mjs';
 import { iceFraction } from './climate.mjs';
+import { firstLook, inheritLook } from './traits.mjs';
 
 const CX_FLAG = ['', '', 'euk', 'multi', 'complex', 'mind']; // 複雑さが上がったときの出来事の種類
 
@@ -16,11 +17,14 @@ function capacity(W, hab) {
   return W.O2 >= C.landO2 ? W.land / C.landRef * (1 - ice) * (W.T > C.landLifeT[0] && W.T < C.landLifeT[1] ? 1 : 0) : 0;
 }
 
-// 海で生まれる最初の生命。
-export const firstLife = W => ({
-  id: W.nextId++, parent: 0, born: W.issueNo, cx: 1, hab: 'ocean', topt: habitatT(W, 'ocean'), tol: C.firstTol,
-  alb: 0, photo: false, aerobe: false, pop: C.firstPop,
-});
+// 海で生まれる最初の生命。単細胞なので、見た目は目も動く部分もない不定形。
+export function firstLife(W) {
+  const id = W.nextId++;
+  return {
+    id, parent: 0, born: W.issueNo, cx: 1, hab: 'ocean', topt: habitatT(W, 'ocean'), tol: C.firstTol,
+    alb: 0, photo: false, aerobe: false, pop: C.firstPop, look: firstLook(W.seed, W.issueNo, id),
+  };
+}
 
 // 100万年ぶんの生き物の営み。ev に出来事を足す。
 export function lifeStep(W, r, innov, ev) {
@@ -55,6 +59,9 @@ export function lifeStep(W, r, innov, ev) {
       d.hab = 'land'; d.topt = W.T;
       if (!W.flags.land) { W.flags.land = W.issueNo; ev.push({ k: 'land' }); }
     }
+    // 見た目の層: 複雑さと生息域が決まったあとで、親から受け継いで少しだけ変える。
+    // 専用の乱数の流れ（種、生まれた号、id）から作るので、計算に使う r には触らない＝歴史は変わらない。
+    d.look = inheritLook(s, d, W.seed);
     born.push(d);
   }
   W.species.push(...born);

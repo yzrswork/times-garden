@@ -6,9 +6,13 @@ import { clamp, r4 } from './math.mjs';
 import { rng, hash } from './random.mjs';
 import { tempFor, volcanism, solveCO2 } from './climate.mjs';
 import { lifeStep, massKill, firstLife } from './life.mjs';
+import { planetLook } from './traits.mjs';
 
-// sim の計算を変えたら上げる。定数の変更は RULES_HASH が自動で拾う。
-export const SIM_VERSION = 'eco-1';
+// sim の計算か、状態 W の形を変えたら上げる。定数の変更は RULES_HASH が自動で拾う。
+// eco-2: 見た目の層（惑星の重力と大気、系統の見た目の性質）を状態に足した。計算そのものは変えていない。
+// 歴史（1号ごとの記録）は eco-1 とビット単位で同じで、tests/traits.test.mjs がそれを固定している。
+// 状態の形が変わると、eco-1 の途中経過はそのままでは続きを計算できないので、版を上げて作り直す。
+export const SIM_VERSION = 'eco-2';
 export const RULES_HASH = hash(SIM_VERSION + '\n' + JSON.stringify(C));
 
 export function initWorld(seed) {
@@ -21,8 +25,10 @@ export function initWorld(seed) {
   const brighten = star === 'red' ? C.redBrighten : star === 'yellow' ? C.sunBrighten : C.blueBrighten;
   const land = C.landInitial[0] + r() * C.landInitial[1];
   const superPhase = r() * C.superPeriod;
+  // 見た目の層: 重力と大気の濃さ。別の乱数の流れから作るので、計算の歴史は変わらない（docs/creatures.md 確定事項5）
+  const { gravity, air } = planetLook(seed);
   return {
-    seed, star, L0, brighten, t: 0, issueNo: 0,
+    seed, star, L0, brighten, gravity, air, t: 0, issueNo: 0,
     CO2: C.co2Initial, O2: 0, reductant: C.o2Reservoir, ocean: 1, land, superPhase,
     T: 0, snowball: false, dust: 0, lip: 0, life: false, species: [], nextId: 1,
     flags: {}, extinct: 0, superAnnounced: false,

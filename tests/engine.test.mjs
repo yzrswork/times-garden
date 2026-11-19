@@ -17,11 +17,13 @@ test('決定論: 同じ台帳と種で2回計算すると、状態と全史の�
 // 試作04（eco-0.1）とビット単位で同じ計算であることは、書き直したときに12万号ぶん比べて確かめた（README の更新ログ）。
 // ここでは主役の惑星の最初の238号を固定する。計算か定数を変えて歴史が変わったら、このテストが落ちる。
 // 意図した変更なら、SIM_VERSION を上げ、ここの値を新しい歴史に合わせて書き換える。
+// 全史のハッシュは状態（W.species）も含むので、見た目の層のように歴史を変えない追加でも変わる。
+// 歴史そのもの（1号ごとの記録）が変わっていないことは、tests/traits.test.mjs の chainHash が固定している。
 test('主役の惑星の最初の238号: 全史のハッシュと主な出来事が変わっていない', () => {
   const ledger = LEDGER.slice(0, 238);
   const { W, snapshots } = runAll(MAIN_SEED, ledger);
   assert.equal(W.star, 'blue');
-  assert.equal(historyHash(summarize(W, snapshots)), '1bace83ddb19e8b82ae6896d09638974');
+  assert.equal(historyHash(summarize(W, snapshots)), 'efd4c70f16b9534e19a9a68e56ce3aa9');
   const ev = snapshots.flatMap(s => s.events.filter(e => !['super'].includes(e.k) && !(e.k === 'impact' && e.size === 'small')).map(e => `#${s.issueNo} ${describeEvent(e)}`));
   assert.deepEqual(ev, [
     '#6 海で最初の生命が生まれた', '#8 光合成をする生き物が現れた', '#42 大気に酸素がたまり始めた（大酸化イベント）',

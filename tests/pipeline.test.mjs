@@ -6,7 +6,7 @@ import { convertGraph, GraphFormatError } from '../pipeline/convert.mjs';
 import { appendIssues, IngestError } from '../pipeline/ingest.mjs';
 import { buildFiles, planWrites, FreezeError } from '../pipeline/advance.mjs';
 import { restore, fileName } from '../engine/observations.mjs';
-import { summarize, historyHash } from '../engine/world.mjs';
+import { summarize, historyHash, SIM_VERSION } from '../engine/world.mjs';
 import { CheckpointError } from '../engine/checkpoint.mjs';
 import { ROOT, LEDGER, readJSON, makeGraph } from './helpers.mjs';
 
@@ -75,7 +75,7 @@ test('data/: 凍結したファイルが同じきまりのまま違えば止ま�
   const ob = JSON.parse(files.get('observations/00100.json')); ob.simVersion = 'eco-0'; ob.snapshots = [];
   older.set('observations/00100.json', JSON.stringify(ob) + '\n');
   older.set('checkpoints/00150.json', '{}');
-  assert.deepEqual(planWrites(files, older).map(p => `${p.rel} ${p.what}`), ['observations/00100.json 作り直し（eco-0 → eco-1）', 'checkpoints/00150.json 削除（いまの計画にない）']);
+  assert.deepEqual(planWrites(files, older).map(p => `${p.rel} ${p.what}`), [`observations/00100.json 作り直し（eco-0 → ${SIM_VERSION}）`, 'checkpoints/00150.json 削除（いまの計画にない）']);
 });
 
 test('data/: 公開データから、ブラウザと同じ手順で全史を組み立てられる。欠けや壊れがあれば使えるところから計算し直す', () => {
