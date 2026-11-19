@@ -4,14 +4,15 @@
  "rulesHash": "06dd2e4f42282992c222433afb3d103c",
  "seed": "times-garden-v1",
  "every": 50,
- "ledgerCount": 238,
- "lastIssueNo": 238,
+ "ledgerCount": 263,
+ "lastIssueNo": 263,
  "checkpoints": [
   50,
   100,
   150,
-  200
+  200,
+  250
  ],
- "historyHash": "1bace83ddb19e8b82ae6896d09638974",
- "stateHash": "53667e18b857ab145291b8f9333b543f"
+ "historyHash": "7139b29ce29616e4c5757c1b6a91ff7a",
+ "stateHash": "a7b9053ee0621e919fa04e0cfa6189f1"
 }
