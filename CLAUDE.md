@@ -6,7 +6,7 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 
 - `docs/pillars.md`: 柱と、やらないこと。設計判断の基準。
 - `docs/art-bible.md`: 見た目の基準。
-- `docs/creatures.md`: 生き物の設計（収斂進化で「知っている形」に寄る世代、確定事項とまだ決めていないこと）。
+- `docs/creatures.md`: 生き物と文明の設計（惑星の1年、収斂進化で「知っている形」に寄る世代、文明、図鑑、実装の段階）。
 - 構想の経緯と確定事項の正は Vault（`yzrswork/obsidian-vault`）の `_ai-logs/2026-11-05_times-garden-handover.md`。このリポジトリと食い違うときは handover を確認し、Owner に確かめる。
 
 ## 本番のコード
@@ -59,6 +59,7 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 
 ## 更新ログ
 
+- 2026-11-19 (4) `docs/creatures.md` の案内を、生き物と文明の設計に合わせて更新。
 - 2026-11-19 (3) 先に読むものに `docs/creatures.md` を追加。
 - 2026-11-19 (2) Git の節を、main へ直接 push する方式に変更（Owner 判断）。
 - 2026-11-19 本番のコード（`engine/`、`pipeline/`、`data/`）の節と、確認の手順を追加。
