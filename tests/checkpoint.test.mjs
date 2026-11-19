@@ -6,15 +6,15 @@ import { C } from '../engine/constants.mjs';
 import {
   encodeState, stateHash, makeCheckpoint, loadCheckpoint, resume, latestUsable, chainHash, CHAIN0, CheckpointError,
 } from '../engine/checkpoint.mjs';
-import { LEDGER, MAIN_SEED, synthLedger } from './helpers.mjs';
+import { LEDGER, MAIN_SEED, MAIN, NO_PLAN, synthLedger } from './helpers.mjs';
 
 const viaText = cp => JSON.parse(JSON.stringify(cp) + '\n'); // ファイルに書いた文字列から読み戻す
-const full = runAll(MAIN_SEED, LEDGER);
+const full = runAll(MAIN_SEED, LEDGER, MAIN);
 const fullHash = historyHash(summarize(full.W, full.snapshots)), fullState = stateHash(full.W);
-const stateAt = n => { const W = initWorld(MAIN_SEED); for (let i = 0; i < n; i++) stepIssue(W, LEDGER[i]); return W; };
+const stateAt = n => { const W = initWorld(MAIN_SEED, MAIN); for (let i = 0; i < n; i++) stepIssue(W, LEDGER[i]); return W; };
 
 test('実データ: すべての号で保存して読み戻し、最後まで計算すると、創刊号からの計算と一致する', () => {
-  const W = initWorld(MAIN_SEED), snaps = [];
+  const W = initWorld(MAIN_SEED, MAIN), snaps = [];
   let chain = CHAIN0, checked = 0;
   const tryAt = () => {
     const cp = viaText(makeCheckpoint(W, LEDGER, snaps.length, snaps, chain));
@@ -30,12 +30,19 @@ test('実データ: すべての号で保存して読み戻し、最後まで計
 });
 
 test('合成の号: 全球凍結の最中や全滅のあとなど、特別な状態でも保存と再開ができる', () => {
-  const RUNS = 6, LEN = 1200, AHEAD = 30, KINDS = ['snowball', 'thaw', 'sterile', 'abio2', 'oceanLost', 'lip', 'impact', 'mass', 'super'];
-  const cover = { snowball: 0, sterile: 0, oceanLost: 0, lip: 0, superAnnounced: 0, fullSpecies: 0 };
+  const LEN = 1200, AHEAD = 30, KINDS = ['snowball', 'thaw', 'sterile', 'abio2', 'oceanLost', 'lip', 'impact', 'mass', 'super'];
+  // 半分は時間の配分あり（1年で次の星へ移る）、半分はなし（1号2,000万年）。
+  // どちらの進み方でも、途中経過の保存と再開ができることを確かめる。
+  // soak-4 と soak-8 は、配分なしで海が蒸発する種（この状態での保存を試すために選んである）。
+  const RUNS = [
+    ['soak-0', { timingFrom: 1 }], ['soak-1', { timingFrom: 1 }], ['soak-2', { timingFrom: 1 }],
+    ['soak-4', NO_PLAN], ['soak-8', NO_PLAN], ['soak-5', NO_PLAN],
+  ];
+  const cover = { snowball: 0, sterile: 0, oceanLost: 0, lip: 0, superAnnounced: 0, fullSpecies: 0, switched: 0 };
   let tried = 0;
-  for (let k = 0; k < RUNS; k++) {
-    const seed = 'soak-' + k, L = synthLedger(seed, LEN);
-    const W = initWorld(seed), hs = [stateHash(W)], snaps = [], at = new Map(), seen = {};
+  for (const [seed, opts] of RUNS) {
+    const L = synthLedger(seed, LEN);
+    const W = initWorld(seed, opts), hs = [stateHash(W)], snaps = [], at = new Map(), seen = {};
     let chain = CHAIN0;
     for (let i = 0; i < L.length; i++) {
       const s = stepIssue(W, L[i]); snaps.push(s); chain = chainHash([s], chain); hs.push(stateHash(W));
@@ -45,15 +52,16 @@ test('合成の号: 全球凍結の最中や全滅のあとなど、特別な状
       at.set(i + 1, viaText(makeCheckpoint(W, L, i + 1, snaps, chain)));
       if (W.snowball) cover.snowball++; if (!W.life && W.flags.abio) cover.sterile++; if (W.flags.oceanLost) cover.oceanLost++;
       if (W.lip > 0.01) cover.lip++; if (W.superAnnounced) cover.superAnnounced++; if (W.species.length >= C.maxSpecies) cover.fullSpecies++;
+      if (W.volumes.length) cover.switched++; // 次の星へ移ったあとの状態でも保存と再開ができるか
     }
     for (const [count, cp] of at) {
-      const R = loadCheckpoint(cp, L, { seed });
+      const R = loadCheckpoint(cp, L, { seed, opts });
       assert.equal(stateHash(R), hs[count], `${seed} #${count} 読み戻し`);
       for (let i = count; i < Math.min(L.length, count + AHEAD); i++) { stepIssue(R, L[i]); assert.equal(stateHash(R), hs[i + 1], `${seed} #${count} から再開して #${i + 1}`); }
       tried++;
     }
     const mid = [...at.keys()][Math.floor(at.size / 2)];
-    const r = resume(at.get(mid), L, { seed, prior: snaps.slice(0, mid) });
+    const r = resume(at.get(mid), L, { seed, prior: snaps.slice(0, mid), opts });
     assert.equal(historyHash(summarize(r.W, r.snapshots)), historyHash(summarize(W, snaps)), `${seed} #${mid} から最後まで`);
   }
   for (const [k, n] of Object.entries(cover)) assert.ok(n > 0, `特別な状態 ${k} で保存を試していない`);
@@ -62,7 +70,7 @@ test('合成の号: 全球凍結の最中や全滅のあとなど、特別な状
 
 test('見る力: よくある壊れ方の途中経過は、全史のハッシュの比較で見つかる', () => {
   const POINTS = [70, 130, 210]; // 超大陸の周期（20号）の倍数を避ける。倍数だと位相が初期値と同じになり比べられない
-  const init = initWorld(MAIN_SEED);
+  const init = initWorld(MAIN_SEED, MAIN);
   const bases = POINTS.map(n => makeCheckpoint(stateAt(n), LEDGER, n, full.snapshots.slice(0, n)));
   const changes = (base, mutate) => {
     const W2 = loadCheckpoint(base, LEDGER); mutate(W2);
@@ -103,14 +111,14 @@ test('Fail Closed: 合わない途中経過は読み込まずに止まる', () =
 test('使えない途中経過は飛ばし、1つ前の途中経過か創刊号から計算する', () => {
   const good50 = viaText(makeCheckpoint(stateAt(50), LEDGER, 50, full.snapshots.slice(0, 50)));
   const bad100 = viaText(makeCheckpoint(stateAt(100), LEDGER, 100, full.snapshots.slice(0, 100)));
-  bad100.state.O2 = 0;
-  const r = latestUsable([good50, bad100], LEDGER, { seed: MAIN_SEED, prior: full.snapshots });
+  bad100.state.CO2 = bad100.state.CO2 + 1; // 必ず変わる値を壊す（O2 は時代によっては元から0）
+  const r = latestUsable([good50, bad100], LEDGER, { seed: MAIN_SEED, prior: full.snapshots, opts: MAIN });
   assert.equal(r.from, 50); assert.equal(r.skipped.length, 1);
   assert.equal(historyHash(summarize(r.W, r.snapshots)), fullHash);
-  const r0 = latestUsable([bad100], LEDGER, { seed: MAIN_SEED, prior: full.snapshots });
+  const r0 = latestUsable([bad100], LEDGER, { seed: MAIN_SEED, prior: full.snapshots, opts: MAIN });
   assert.equal(r0.from, 0);
   assert.equal(historyHash(summarize(r0.W, r0.snapshots)), fullHash);
   // 観測データが途中経過より短いときも、その途中経過は使わない
-  const r1 = latestUsable([good50], LEDGER, { seed: MAIN_SEED, prior: full.snapshots.slice(0, 30) });
+  const r1 = latestUsable([good50], LEDGER, { seed: MAIN_SEED, prior: full.snapshots.slice(0, 30), opts: MAIN });
   assert.equal(r1.from, 0);
 });

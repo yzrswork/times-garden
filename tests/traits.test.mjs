@@ -6,9 +6,11 @@ import { runAll, initWorld, stepIssue } from '../engine/world.mjs';
 import { chainHash, encodeState, stateHash } from '../engine/checkpoint.mjs';
 import { C } from '../engine/constants.mjs';
 import { planetLook, firstLook, inheritLook, bodySize, bodyColor, bestiary, describeLook, sizeLabel, FORMS, COVERS, LIMBS, DEPTHS, PATTERNS, EYE_KINDS } from '../engine/traits.mjs';
-import { LEDGER, MAIN_SEED, synthLedger } from './helpers.mjs';
+import { LEDGER, MAIN_SEED, NO_PLAN, synthLedger } from './helpers.mjs';
 
 // 合成の号は helpers.mjs の synthLedger と同じ作り方。基準値は見た目の層を足す前（eco-1）に取った。
+// ここでは時間の配分を使わない設定（NO_PLAN、1号いつも2,000万年）で回す。eco-3 の時間の配分は
+// 歴史を変える意図の変更なので、それとは分けて「見た目の層だけでは歴史が変わらない」ことを確かめる。
 const HISTORY = [
   { what: '主役の惑星 238号', ledger: () => LEDGER.slice(0, 238), seed: MAIN_SEED, chain: '569a8463b771ebc02d3eedf547be73c8' },
   { what: '主役の惑星 264号', ledger: () => LEDGER, seed: MAIN_SEED, chain: '9d939ce2f0ae183eb9ee58ec654bf5e5' },
@@ -21,13 +23,13 @@ const HISTORY = [
 // 見た目の乱数を計算の乱数 r から取ってしまうと、ここが落ちる。
 test('見た目の層は歴史を変えない: 1号ごとの記録のハッシュが eco-1 と一致する', () => {
   for (const h of HISTORY) {
-    const { snapshots } = runAll(h.seed, h.ledger());
+    const { snapshots } = runAll(h.seed, h.ledger(), NO_PLAN);
     assert.equal(chainHash(snapshots), h.chain, `${h.what} の歴史が変わっている`);
   }
 });
 
 test('決定論: 同じ種なら見た目も同じ', () => {
-  const a = runAll(MAIN_SEED, LEDGER), b = runAll(MAIN_SEED, LEDGER);
+  const a = runAll(MAIN_SEED, LEDGER, NO_PLAN), b = runAll(MAIN_SEED, LEDGER, NO_PLAN);
   assert.equal(stateHash(a.W), stateHash(b.W));
   assert.deepEqual(a.W.species.map(s => s.look), b.W.species.map(s => s.look));
   assert.deepEqual([a.W.gravity, a.W.air], [b.W.gravity, b.W.air]);
@@ -49,7 +51,7 @@ test('惑星の重力と大気: 種から1回決まり、範囲の中に入り�
 });
 
 test('状態は JSON で往復できる（-0、undefined、共有された物がない）', () => {
-  const { W } = runAll(MAIN_SEED, LEDGER);
+  const { W } = runAll(MAIN_SEED, LEDGER, NO_PLAN);
   assert.doesNotThrow(() => encodeState(W)); // check() が -0 や undefined、同じ物の共有で止める
   assert.ok(W.species.every(s => s.look && typeof s.look === 'object'));
   // 親子で look の物を共有していないこと（共有していると encodeState が止まる）
@@ -59,7 +61,7 @@ test('状態は JSON で往復できる（-0、undefined、共有された物が
 
 test('見た目の値は決めた選択肢と範囲の中に入る', () => {
   for (let k = 0; k < 4; k++) {
-    const { W } = runAll('look-' + k, synthLedger('look-' + k, 900));
+    const { W } = runAll('look-' + k, synthLedger('look-' + k, 900), NO_PLAN);
     for (const s of W.species) {
       const L = s.look;
       assert.ok(FORMS.includes(L.form), `form ${L.form}`);
@@ -86,7 +88,7 @@ test('見た目の値は決めた選択肢と範囲の中に入る', () => {
 test('単細胞のうちは目も動く部分も持たない（複雑さが上がってから形が分かれる）', () => {
   let checked = 0;
   for (let k = 0; k < 6; k++) {
-    const { W } = runAll('simple-' + k, synthLedger('simple-' + k, 900));
+    const { W } = runAll('simple-' + k, synthLedger('simple-' + k, 900), NO_PLAN);
     for (const s of W.species) {
       if (s.cx >= C.lookCxEye) continue;
       checked++;
@@ -136,7 +138,7 @@ test('多細胞になった分岐で、体の型と動く部分を持ち始め�
 test('体の型と動く部分が噛み合っている（胞子型に脚は生えない）', () => {
   const allowed = { blob: ['none', 'tentacle'], seg: ['leg', 'fin', 'wing'], bell: ['tentacle'], radial: ['tentacle', 'none'], spore: ['none'] };
   for (let k = 0; k < 6; k++) {
-    const { W } = runAll('limb-' + k, synthLedger('limb-' + k, 1200));
+    const { W } = runAll('limb-' + k, synthLedger('limb-' + k, 1200), NO_PLAN);
     for (const s of W.species) {
       const L = s.look;
       assert.ok(allowed[L.form].includes(L.limb), `${L.form} に ${L.limb}`);
@@ -151,7 +153,7 @@ test('体の型と動く部分が噛み合っている（胞子型に脚は生�
 test('長く続けば、体の型も目の種類も出そろう', () => {
   const forms = new Set(), eyes = new Set(), limbs = new Set(), covers = new Set();
   for (let k = 0; k < 12; k++) {
-    const { W } = runAll('variety-' + k, synthLedger('variety-' + k, 1200));
+    const { W } = runAll('variety-' + k, synthLedger('variety-' + k, 1200), NO_PLAN);
     for (const s of W.species) { forms.add(s.look.form); eyes.add(s.look.eyeKind); limbs.add(s.look.limb); covers.add(s.look.cover); }
   }
   assert.equal(forms.size, FORMS.length, `体の型が出そろわない（${[...forms].join(', ')}）`);
@@ -185,7 +187,7 @@ test('色味: 恒星の種類で変わり、系統ごとのずれが乗る', () 
 });
 
 test('図鑑: いま生きている系統が全部並び、姿の文章が出る', () => {
-  const { W } = runAll(MAIN_SEED, LEDGER);
+  const { W } = runAll(MAIN_SEED, LEDGER, NO_PLAN);
   const list = bestiary(W);
   assert.equal(list.length, W.species.length);
   assert.deepEqual(list.map(x => x.id).sort((a, b) => a - b), W.species.map(s => s.id).sort((a, b) => a - b));

@@ -5,7 +5,14 @@ import { rng } from '../engine/random.mjs';
 export const ROOT = new URL('..', import.meta.url).pathname;
 export const readJSON = p => JSON.parse(readFileSync(ROOT + p, 'utf8'));
 export const LEDGER = readJSON('data/ledger.json').issues;
-export const MAIN_SEED = 'times-garden-v1';
+import { MAIN_SEED as SEED, MAIN_TIMING_FROM } from '../pipeline/config.mjs';
+export { MAIN_TIMING_FROM };
+export const MAIN_SEED = SEED;
+// 主役の惑星の設定（pipeline/config.mjs の値をそのまま使う）
+export const MAIN = { timingFrom: MAIN_TIMING_FROM };
+// 時間の配分をまったく使わない設定。1号はいつも2,000万年で、eco-1 と同じ計算になる。
+// 見た目の層のように「歴史を変えない」ことを確かめるときに使う。
+export const NO_PLAN = { timingFrom: Number.MAX_SAFE_INTEGER };
 
 // 合成の号（試作04 run.mjs の synthLedger と同じ作り方）
 export function synthLedger(seed, n) {

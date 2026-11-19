@@ -58,14 +58,14 @@ export function makeCheckpoint(W, ledger, count, snapshots, chain = chainHash(sn
   if (snapshots.length !== count) fail(`記録の号数（${snapshots.length}）が count（${count}）と合わない`);
   const text = encodeState(W);
   return {
-    format: FORMAT, simVersion: SIM_VERSION, rulesHash: RULES_HASH, seed: W.seed,
+    format: FORMAT, simVersion: SIM_VERSION, rulesHash: RULES_HASH, seed: W.universeSeed ?? W.seed,
     count, issueNo: W.issueNo, ledgerHash: ledgerHash(ledger, count), snapshotsHash: chain,
     stateHash: hash(text), state: JSON.parse(text),
   };
 }
 
 /* ---------- 復元 ---------- */
-export function loadCheckpoint(cp, ledger, { seed } = {}) {
+export function loadCheckpoint(cp, ledger, { seed, opts } = {}) {
   if (!cp || typeof cp !== 'object' || cp.format !== FORMAT) fail('途中経過の形式が違う');
   if (cp.simVersion !== SIM_VERSION) fail(`計算の版が違う（途中経過 ${cp.simVersion}、いま ${SIM_VERSION}）`);
   if (cp.rulesHash !== RULES_HASH) fail('計算のきまり（版か定数）が保存したときと違う');
@@ -76,13 +76,16 @@ export function loadCheckpoint(cp, ledger, { seed } = {}) {
   const text = JSON.stringify(cp.state);
   if (hash(text) !== cp.stateHash) fail('状態のハッシュが合わない（壊れているか書き換えられている）');
   const W = JSON.parse(text); // 読み込んだ物とは共有しない新しい状態
-  if (W.seed !== cp.seed || W.issueNo !== cp.issueNo) fail('状態の中身が見出しと合わない');
+  if ((W.universeSeed ?? W.seed) !== cp.seed || W.issueNo !== cp.issueNo) fail('状態の中身が見出しと合わない');
+  // 時間の配分を入れる号が変わると、そこから先の歴史が変わる（engine/era.mjs）
+  const want = opts?.timingFrom;
+  if (want !== undefined && W.timingFrom !== want) fail(`時間の配分を入れる号が違う（途中経過 ${W.timingFrom}、いま ${want}）`);
   return W;
 }
 
 // 途中経過から台帳の最後まで計算する。prior（途中経過までの記録）を渡すと、創刊号からの全記録も返す。
-export function resume(cp, ledger, { seed, prior } = {}) {
-  const W = loadCheckpoint(cp, ledger, { seed });
+export function resume(cp, ledger, { seed, prior, opts } = {}) {
+  const W = loadCheckpoint(cp, ledger, { seed, opts });
   if (prior && (prior.length !== cp.count || chainHash(prior) !== cp.snapshotsHash)) fail('これまでの記録（観測データ）が途中経過と合わない');
   const added = [];
   for (let i = cp.count; i < ledger.length; i++) added.push(stepIssue(W, ledger[i]));
@@ -90,8 +93,8 @@ export function resume(cp, ledger, { seed, prior } = {}) {
 }
 
 // 創刊号から計算しながら、every 号ごとに途中経過を作る。
-export function runWithCheckpoints(seed, ledger, every) {
-  const W = initWorld(seed), snapshots = [], checkpoints = [];
+export function runWithCheckpoints(seed, ledger, every, opts) {
+  const W = initWorld(seed, opts), snapshots = [], checkpoints = [];
   let chain = CHAIN0;
   for (let i = 0; i < ledger.length; i++) {
     const s = stepIssue(W, ledger[i]); snapshots.push(s); chain = chainHash([s], chain);
@@ -102,15 +105,15 @@ export function runWithCheckpoints(seed, ledger, every) {
 
 // 手元の途中経過のうち、使えるいちばん新しいものから続きを計算する。どれも使えなければ創刊号から。
 // prior は観測データ（これまでの記録）。途中経過より短くてもよい（その途中経過は飛ばす）。
-export function latestUsable(checkpoints, ledger, { seed, prior = [] } = {}) {
+export function latestUsable(checkpoints, ledger, { seed, prior = [], opts } = {}) {
   const skipped = [];
   for (const cp of [...checkpoints].sort((a, b) => (b?.count ?? -1) - (a?.count ?? -1))) {
     try {
-      const r = resume(cp, ledger, { seed, prior: prior.slice(0, cp?.count) });
+      const r = resume(cp, ledger, { seed, prior: prior.slice(0, cp?.count), opts });
       return { from: cp.count, skipped, W: r.W, snapshots: r.snapshots };
     } catch (e) { if (!(e instanceof CheckpointError)) throw e; skipped.push({ count: cp?.count, reason: e.message }); }
   }
-  const W = initWorld(seed), snapshots = [];
+  const W = initWorld(seed, opts), snapshots = [];
   for (const issue of ledger) snapshots.push(stepIssue(W, issue));
   return { from: 0, skipped, W, snapshots };
 }

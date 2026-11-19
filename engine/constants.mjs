@@ -4,8 +4,14 @@
 const G = '試作04のゲーム調整';
 export const CONSTANTS = {
   // 時間
-  myrPerIssue:      { v: 20,      unit: '百万年/号',  note: '1号あたりの時間。238号で約48億年', src: 'ゲーム設計', status: '思弁' },
-  substeps:         { v: 20,      unit: '回/号',      note: '1号の中の計算回数（1回=100万年）', src: 'ゲーム設計', status: '思弁' },
+  myrPerIssue:      { v: 20,      unit: '百万年/号',  note: '時間の配分を入れる前の1号の時間。いまは基準としてだけ使う（事件の確率を1号の時間に合わせて縮める割り算の分母、超大陸の周期の単位）', src: 'ゲーム設計', status: '思弁' },
+  myrByEra:         { v: { birth: 3, simple: 9, form: 2, civ: 0.005 }, unit: '百万年/号',
+                      note: '時代ごとの1号の時間。birth、simple、form は整数（1号の中を100万年ずつ計算するため）。civ は数千年で、1号の中の計算はしない', src: 'docs/creatures.md「時間の配分」。号数の目安に合わせて長期運転テストで決めた', status: '思弁' },
+  yearIssues:       { v: 730,     unit: '号',         note: '1つの惑星を観測する号数（1日2号で約1年）', src: 'docs/creatures.md 確定事項8', status: '思弁' },
+  birthEvents:      { v: [[1, 'cloud'], [2, 'star'], [4, 'system'], [6, 'surface']], unit: '号、出来事',
+                      note: '誕生の時代の出来事と、惑星の始まりから何号目に出すか', src: 'handover「ガス雲、恒星、惑星系、惑星環境、生命、進化」', status: '思弁' },
+  deadAfter:        { v: 60,      unit: '号',         note: '生き物が絶えてから、観測を終えると判断するまでの号数（約1か月。全滅のあとに生命がふたたび生まれることがあるので待つ）', src: 'docs/creatures.md「惑星の最期と引き継ぎ」', status: '思弁' },
+  giantRecent:      { v: 8,       unit: '号',         note: '全滅の手前これだけの号に巨大な隕石があれば、隕石による終わりとする', src: 'ゲーム設計', status: '思弁' },
 
   // 恒星
   starShare:        { v: [0.2, 0.85], unit: '累積の割合', note: '恒星の種類を決める境目。乱数がこれ未満なら赤色矮星、次未満なら黄色い恒星、残りは青白い恒星（20%、65%、15%）', src: G + '（現実の恒星は赤色矮星が多数派で、この割合とは違う）', status: '思弁' },
@@ -113,6 +119,9 @@ export const CONSTANTS = {
   albRange:         { v: [-0.25, 0.25], unit: '',     note: '体の色（アルベドへの寄与）の下限と上限', src: G, status: '思弁' },
   photoChance:      { v: 0.06,    unit: '/分岐',      note: '海の系統の分岐で光合成を獲得する確率', src: G, status: '思弁' },
   cxChance:         { v: [0, 0.05, 0.03, 0.03, 0.002], unit: '/分岐', note: '複雑さ1〜4から1段上がる確率（添え字が今の複雑さ）', src: G, status: '思弁' },
+  cxChancePlan:     { v: [0, 0.05, 0.7, 0.9, 0.007], unit: '/分岐',
+                      note: '時間の配分を入れた号から使う、1段上がる確率（添え字が今の複雑さ）。形の時代は1号が数百万年で分岐の回数が減るため、大型（3→4）と考える生き物（4→5）を上げてある。配分を入れる前の号は cxChance のままで、これまでの歴史は変わらない',
+                      src: 'docs/creatures.md「時間の配分」の号数の目安に、長期運転テストで合わせた', status: '思弁' },
   cxO2Margin:       { v: 0.8,     unit: '倍',         note: '1段上がるには、次の段階に必要な酸素のこの倍以上が要る', src: G, status: '思弁' },
   aerobeCx:         { v: 2,       unit: '段階',       note: 'この複雑さ以上は酸素を使える', src: G, status: '思弁' },
   landCx:           { v: 2,       unit: '段階',       note: 'この複雑さ以上の海の系統が陸に上がりうる', src: G, status: '思弁' },

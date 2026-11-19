@@ -18,7 +18,12 @@
   .facts dt { font-size: .7rem; color: var(--dim); letter-spacing: .08em; }
   .facts dd { margin: 0 0 8px; font-size: .9rem;
     font-variant-numeric: tabular-nums; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-  .log ul, .problems { list-style: none; padding: 0; margin: 0; }
+  .log ul, .problems, .years { list-style: none; padding: 0; margin: 0; }
+  .years li { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: baseline;
+    font-size: .8rem; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .years .num { color: var(--dim); font-variant-numeric: tabular-nums; text-align: right; }
+  .years .end { color: var(--dim); font-size: .72rem; }
+  .years .now .end, .years li.now .num { color: var(--accent); }
   .log li { font-size: .85rem; color: var(--text); padding: 2px 0; }
   .log li::before { content: "·"; color: var(--accent); margin-right: 8px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }

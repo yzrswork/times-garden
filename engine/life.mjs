@@ -4,6 +4,7 @@ import { clamp } from './math.mjs';
 import { gauss } from './random.mjs';
 import { iceFraction } from './climate.mjs';
 import { firstLook, inheritLook } from './traits.mjs';
+import { planned } from './era.mjs';
 
 const CX_FLAG = ['', '', 'euk', 'multi', 'complex', 'mind']; // 複雑さが上がったときの出来事の種類
 
@@ -50,7 +51,10 @@ export function lifeStep(W, r, innov, ev) {
       d.photo = true;
       if (!W.flags.photo) { W.flags.photo = W.issueNo; ev.push({ k: 'photo' }); }
     }
-    if (d.cx < C.maxCx && r() < C.cxChance[d.cx] && W.O2 >= C.needO2[d.cx + 1] * C.cxO2Margin) {
+    // 1段上がる確率は、時間の配分を入れた号から cxChancePlan を使う（engine/constants.mjs）。
+    // 乱数は同じ回数だけ引くので、それより前の号の歴史は変わらない。
+    const up = (planned(W, W.issueNo) ? C.cxChancePlan : C.cxChance)[d.cx];
+    if (d.cx < C.maxCx && r() < up && W.O2 >= C.needO2[d.cx + 1] * C.cxO2Margin) {
       d.cx++; d.aerobe = d.cx >= C.aerobeCx || d.aerobe;
       const k2 = CX_FLAG[d.cx];
       if (!W.flags[k2]) { W.flags[k2] = W.issueNo; ev.push({ k: k2 }); }

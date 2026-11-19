@@ -32,7 +32,8 @@ export function joinChunks(chunks, seed) {
 export function restore({ manifest, ledger, chunks = [], checkpoints = [] }) {
   if (!manifest || manifest.format !== MANIFEST_FORMAT) throw new CheckpointError('manifest の形式が違う');
   const seed = manifest.seed;
+  const opts = { timingFrom: manifest.timingFrom ?? 1 };
   const { snapshots: prior, problems } = joinChunks(chunks, seed);
-  const r = latestUsable(checkpoints, ledger, { seed, prior });
+  const r = latestUsable(checkpoints, ledger, { seed, prior, opts });
   return { ...r, problems: problems.concat(r.skipped.map(s => `途中経過 ${s.count}: ${s.reason}`)) };
 }

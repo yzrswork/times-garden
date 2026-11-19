@@ -1,9 +1,10 @@
 {
  "format": "times-garden-manifest/1",
- "simVersion": "eco-2",
- "rulesHash": "40d270749a8cb57d26db9e307810bfe8",
+ "simVersion": "eco-3",
+ "rulesHash": "0379fe2b9952f201b3efb74f90a74329",
  "seed": "times-garden-v1",
  "every": 50,
+ "timingFrom": 265,
  "ledgerCount": 264,
  "lastIssueNo": 264,
  "checkpoints": [
@@ -13,6 +14,6 @@
   200,
   250
  ],
- "historyHash": "a084e9c97ef58b68701fc7e5151cad31",
- "stateHash": "a6d466fb8ade72492a0b235479bd8ec9"
+ "historyHash": "eea8eec4d670b31bc76a81fd1f56d17e",
+ "stateHash": "eca78563f081c540abd12b884aad527f"
 }

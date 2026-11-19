@@ -3,7 +3,10 @@
 import { restore } from '../engine/observations.mjs';
 import { fileName } from '../engine/observations.mjs';
 import { bestiary, CX_JA } from '../engine/traits.mjs';
-import { describe as describeEvent } from '../engine/events.mjs';
+import { describe as describeEvent, END_TEXT } from '../engine/events.mjs';
+import { eraOf, ERA_JA, myrOf } from '../engine/era.mjs';
+import { planetAge } from '../engine/planet.mjs';
+import { C } from '../engine/constants.mjs';
 import { creatureSVG } from './draw.mjs';
 import { palette } from './palette.mjs';
 
@@ -11,6 +14,12 @@ const BASE = new URL('../', import.meta.url);
 const get = async p => (await fetch(new URL(p, BASE))).json();
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const STAR_JA = { red: '赤色矮星', yellow: '黄色い恒星', blue: '青白い恒星' };
+
+// この号の1号あたりの時間を、読みやすい単位で。配分を入れる前の号は1号2,000万年。
+function myrFmt(W, issueNo) {
+  const myr = issueNo >= (W.timingFrom ?? 1) ? myrOf(eraOf(W)) : C.myrPerIssue;
+  return myr >= 1 ? `${myr * 100}万年` : `${Math.round(myr * 1e6).toLocaleString('ja-JP')}年`;
+}
 
 export async function load() {
   const manifest = await get('data/manifest.json');
@@ -34,10 +43,13 @@ export function render(root, { W, snapshots, problems, ms }) {
   root.textContent = '';
 
   const last = snapshots.at(-1);
+  const era = eraOf(W), age = planetAge(W);
   const head = el('header');
-  head.append(el('h1', null, '観測記録'));
+  head.append(el('h1', null, `観測記録 ${W.planetNo}つ目の星`));
   const facts = [
     ['号', `#${last.issueNo}（${last.date} ${last.edition === 'morning' ? '朝刊' : '昼刊'}）`],
+    ['時代', `${ERA_JA[era]}（1号 ${myrFmt(W, last.issueNo)}）`],
+    ['観測', `${age} / ${C.yearIssues}号`],
     ['恒星', STAR_JA[W.star] ?? W.star],
     ['年代', `約${(last.gyr * 10).toFixed(1)}億年目`], // gyr は10億年が1。pipeline/report.mjs と同じ言い方
     ['気温', `${last.T.toFixed(1)}℃`],
@@ -66,6 +78,8 @@ export function render(root, { W, snapshots, problems, ms }) {
   const list = bestiary(W);
   const sec = el('section', 'bestiary');
   sec.append(el('h2', null, `いま生きている系統 ${list.length}`));
+  if (era === 'civ') sec.append(el('p', 'dim', '文明の時代。1号が数千年しか進まないので、進化と気候はほとんど動かない。'));
+  if (!list.length) sec.append(el('p', 'dim', 'いま生き物はいない。'));
   const grid = el('div', 'grid');
   for (const e of list) {
     const card = el('article', 'card');
@@ -79,6 +93,25 @@ export function render(root, { W, snapshots, problems, ms }) {
   }
   sec.append(grid);
   root.append(sec);
+
+  // 宇宙の年表（観測を終えた星と、いま見ている星）
+  const chron = el('section', 'chron');
+  chron.append(el('h2', null, '宇宙の年表'));
+  const ol = el('ol', 'years');
+  for (const v of W.volumes) {
+    const li = el('li');
+    li.append(el('span', 'num', `${v.planetNo}`));
+    li.append(el('span', null, `${STAR_JA[v.star] ?? v.star}・#${v.from}〜#${v.to}・約${(v.gyr * 10).toFixed(1)}億年・最大の複雑さ ${CX_JA[v.maxCx] || 'なし'}`));
+    li.append(el('span', 'end', END_TEXT[v.endKind] ?? v.endKind));
+    ol.append(li);
+  }
+  const now = el('li', 'now');
+  now.append(el('span', 'num', `${W.planetNo}`));
+  now.append(el('span', null, `${STAR_JA[W.star] ?? W.star}・#${(W.planetFrom ?? 0) + 1}〜・約${(last.gyr * 10).toFixed(1)}億年・${ERA_JA[era]}`));
+  now.append(el('span', 'end', '観測中'));
+  ol.append(now);
+  chron.append(ol);
+  root.append(chron);
 
   const foot = el('footer');
   foot.append(el('p', 'dim', `公開データから組み立て: ${ms}ms。名前はまだ付いていない（記事キーワードが要る）。`));

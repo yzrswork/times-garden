@@ -12,7 +12,8 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 ## 本番のコード
 
 - 計算は `engine/`（Node とブラウザで共通）、取り込みと公開データの更新は `pipeline/`、公開データは `data/`。構成は `README.md`。
-- 計算を変えたら `engine/world.mjs` の `SIM_VERSION` を上げる。定数を変えると `RULES_HASH` が自動で変わる。どちらも `node pipeline/advance.mjs` で `data/` を作り直す。
+- 計算を変えたら `engine/world.mjs` の `SIM_VERSION` を上げる。状態 W の形を変えたときも上げる（前の版の途中経過から続きを計算できないため）。定数を変えると `RULES_HASH` が自動で変わる。どちらも `node pipeline/advance.mjs` で `data/` を作り直す。
+- 主役の惑星の過去の号の歴史は変えない。計算を変えるときは、`pipeline/config.mjs` の `MAIN_TIMING_FROM` から先だけに効くようにする（`engine/era.mjs` の `planned`）。乱数を引く回数は変えないこと。
 
 ## データ
 
@@ -59,6 +60,7 @@ YZRS Times の号が出るたびに進む、架空の宇宙と惑星と生き物
 
 ## 更新ログ
 
+- 2026-11-19 (5) `SIM_VERSION` は状態の形を変えたときも上げる、過去の号の歴史は変えない、を本番のコードの節に追記。
 - 2026-11-19 (4) `docs/creatures.md` の案内を、生き物と文明の設計に合わせて更新。
 - 2026-11-19 (3) 先に読むものに `docs/creatures.md` を追加。
 - 2026-11-19 (2) Git の節を、main へ直接 push する方式に変更（Owner 判断）。

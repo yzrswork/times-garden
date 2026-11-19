@@ -8,15 +8,16 @@ import { pathToFileURL } from 'node:url';
 import { SIM_VERSION, RULES_HASH, summarize, historyHash } from '../engine/world.mjs';
 import { runWithCheckpoints, stateHash } from '../engine/checkpoint.mjs';
 import { makeChunk, restore, fileName, MANIFEST_FORMAT } from '../engine/observations.mjs';
-import { OPS, MAIN_SEED, PATHS } from './config.mjs';
+import { OPS, MAIN_SEED, MAIN_TIMING_FROM, PATHS } from './config.mjs';
 
 export class FreezeError extends Error {}
 const FROZEN_DIRS = ['checkpoints/', 'observations/'];
 const DATA = PATHS.root + 'data/';
 
 // 台帳から data/ の中身（相対パス → 文字列）を作る。作ったものから復元し直して、同じ全史になるかも確かめる。
-export function buildFiles(ledger, { seed = MAIN_SEED, every = OPS.checkpointEvery } = {}) {
-  const { W, snapshots, checkpoints } = runWithCheckpoints(seed, ledger, every);
+export function buildFiles(ledger, { seed = MAIN_SEED, every = OPS.checkpointEvery, timingFrom = MAIN_TIMING_FROM } = {}) {
+  const opts = { timingFrom };
+  const { W, snapshots, checkpoints } = runWithCheckpoints(seed, ledger, every, opts);
   const files = new Map(), chunks = [];
   for (const cp of checkpoints) {
     const chunk = makeChunk(seed, snapshots, cp.count - every, cp.count);
@@ -25,7 +26,7 @@ export function buildFiles(ledger, { seed = MAIN_SEED, every = OPS.checkpointEve
     files.set('observations/' + fileName(cp.count), JSON.stringify(chunk) + '\n');
   }
   const manifest = {
-    format: MANIFEST_FORMAT, simVersion: SIM_VERSION, rulesHash: RULES_HASH, seed, every,
+    format: MANIFEST_FORMAT, simVersion: SIM_VERSION, rulesHash: RULES_HASH, seed, every, timingFrom,
     ledgerCount: ledger.length, lastIssueNo: ledger.at(-1)?.issueNo ?? 0,
     checkpoints: checkpoints.map(c => c.count),
     historyHash: historyHash(summarize(W, snapshots)), stateHash: stateHash(W),

@@ -6,10 +6,10 @@ import { runAll, summarize, historyHash } from '../engine/world.mjs';
 import { stateHash } from '../engine/checkpoint.mjs';
 import { CONSTANTS } from '../engine/constants.mjs';
 import { describe as describeEvent, EVENT_KINDS } from '../engine/events.mjs';
-import { ROOT, LEDGER, MAIN_SEED, synthLedger } from './helpers.mjs';
+import { ROOT, LEDGER, MAIN_SEED, MAIN, NO_PLAN, synthLedger } from './helpers.mjs';
 
 test('決定論: 同じ台帳と種で2回計算すると、状態と全史のハッシュが一致する', () => {
-  const a = runAll(MAIN_SEED, LEDGER), b = runAll(MAIN_SEED, LEDGER);
+  const a = runAll(MAIN_SEED, LEDGER, MAIN), b = runAll(MAIN_SEED, LEDGER, MAIN);
   assert.equal(stateHash(a.W), stateHash(b.W));
   assert.equal(historyHash(summarize(a.W, a.snapshots)), historyHash(summarize(b.W, b.snapshots)));
 });
@@ -21,9 +21,9 @@ test('決定論: 同じ台帳と種で2回計算すると、状態と全史の�
 // 歴史そのもの（1号ごとの記録）が変わっていないことは、tests/traits.test.mjs の chainHash が固定している。
 test('主役の惑星の最初の238号: 全史のハッシュと主な出来事が変わっていない', () => {
   const ledger = LEDGER.slice(0, 238);
-  const { W, snapshots } = runAll(MAIN_SEED, ledger);
+  const { W, snapshots } = runAll(MAIN_SEED, ledger, MAIN);
   assert.equal(W.star, 'blue');
-  assert.equal(historyHash(summarize(W, snapshots)), 'efd4c70f16b9534e19a9a68e56ce3aa9');
+  assert.equal(historyHash(summarize(W, snapshots)), '73ab1041d425913e4bcb64af5a718b51');
   const ev = snapshots.flatMap(s => s.events.filter(e => !['super'].includes(e.k) && !(e.k === 'impact' && e.size === 'small')).map(e => `#${s.issueNo} ${describeEvent(e)}`));
   assert.deepEqual(ev, [
     '#6 海で最初の生命が生まれた', '#8 光合成をする生き物が現れた', '#42 大気に酸素がたまり始めた（大酸化イベント）',
@@ -36,6 +36,7 @@ test('主役の惑星の最初の238号: 全史のハッシュと主な出来事
 test('出来事の種類はすべて説明の文章を持つ', () => {
   const kinds = new Set();
   for (let k = 0; k < 6; k++) for (const s of runAll('kinds-' + k, synthLedger('kinds-' + k, 1500)).snapshots) for (const e of s.events) kinds.add(e.k);
+  for (let k = 0; k < 4; k++) for (const s of runAll('old-' + k, synthLedger('old-' + k, 900), NO_PLAN).snapshots) for (const e of s.events) kinds.add(e.k);
   for (const k of kinds) assert.ok(EVENT_KINDS.includes(k), `未知の出来事 ${k}`);
   for (const k of EVENT_KINDS) assert.notEqual(describeEvent({ k, size: 'small', lost: 0.5 }), k);
   assert.ok(kinds.size >= 12, `合成の号で出た出来事の種類が少ない（${[...kinds].join(', ')}）`);

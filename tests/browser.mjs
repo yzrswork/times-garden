@@ -29,7 +29,7 @@ const out = await page.evaluate(async () => {
   const checkpoints = await Promise.all(manifest.checkpoints.map(n => get('/data/checkpoints/' + O.fileName(n))));
   const median = f => { const ts = []; let v; for (let i = 0; i < 7; i++) { const t = performance.now(); v = f(); ts.push(performance.now() - t); } ts.sort((a, b) => a - b); return { v, ms: Math.round(ts[3] * 10) / 10 }; };
   const r = median(() => O.restore({ manifest, ledger, chunks, checkpoints }));
-  const full = median(() => W.runAll(manifest.seed, ledger));
+  const full = median(() => W.runAll(manifest.seed, ledger, { timingFrom: manifest.timingFrom ?? 1 }));
   return {
     ua: navigator.userAgent, issues: ledger.length,
     restored: { from: r.v.from, problems: r.v.problems, ms: r.ms, hash: W.historyHash(W.summarize(r.v.W, r.v.snapshots)), state: CP.stateHash(r.v.W) },
