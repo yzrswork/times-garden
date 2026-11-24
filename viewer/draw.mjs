@@ -57,8 +57,21 @@ function formShape(form, id, w, h) {
     let d = `M${n2(xy[0][0])} ${n2(xy[0][1])}`;
     for (let i = 1; i < xy.length; i++) d += `Q${n2(xy[i - 1][0] + (xy[i][0] - xy[i - 1][0]) * 0.5)} ${n2(xy[i][1] - 3)} ${n2(xy[i][0])} ${n2(xy[i][1])}`;
     parts.push({ el: 'path', d: d + 'Z' });
-  } else if (form === 'radial') { // 放射腕: 中央の塊から腕が出る（腕は動く部分で描く）
-    parts.push({ el: 'ellipse', cx: C0, cy: C0, rx: w * 0.62, ry: h * 0.62 });
+  } else if (form === 'radial') { // 放射腕: 中央の塊から腕が放射状に出る
+    // 腕は体の型そのものなので、動く部分（触手など）を持たない系統でも必ず描く。
+    // 先に腕を描き、あとから中央の塊を重ねて付け根を隠す。
+    const arms = 4 + Math.floor(Math.abs(wob(id, 3)) * 4); // 4〜7本
+    const rx = w * 0.6, ry = h * 0.6;
+    for (let i = 0; i < arms; i++) {
+      const a = (Math.PI * 2 * i) / arms + wob(id, i) * 0.1, sp = 0.3;
+      const px = (ang, k) => C0 + Math.cos(ang) * rx * k, py = (ang, k) => C0 + Math.sin(ang) * ry * k;
+      const tipX = px(a, 1.85), tipY = py(a, 1.85);
+      parts.push({ el: 'path', d:
+        `M${n2(px(a - sp, 0.95))} ${n2(py(a - sp, 0.95))}`
+        + `Q${n2(px(a - sp * 0.7, 1.5))} ${n2(py(a - sp * 0.7, 1.5))} ${n2(tipX)} ${n2(tipY)}`
+        + `Q${n2(px(a + sp * 0.7, 1.5))} ${n2(py(a + sp * 0.7, 1.5))} ${n2(px(a + sp, 0.95))} ${n2(py(a + sp, 0.95))}Z` });
+    }
+    parts.push({ el: 'ellipse', cx: C0, cy: C0, rx, ry });
   } else if (form === 'spore') { // 胞子型: 小さな丸と突起
     parts.push({ el: 'ellipse', cx: C0, cy: C0, rx: w * 0.52, ry: h * 0.52 });
     for (let i = 0; i < 8; i++) {
