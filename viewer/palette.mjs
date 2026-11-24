@@ -22,13 +22,40 @@ const P = {
 
 export const palette = star => P[star] ?? P.yellow;
 
-// 系統の本体の色。パレットの3つの候補から系統ごとに1つを選び、明度だけを体の色（アルベド）で動かす。
-// 色相のずれは drift を小さく丸めて使う（±4度まで。生の乱数を見せない）。
-export function bodyFill(star, look, light) {
+// 系統の本体の色（色相、彩度、明度）。パレットの3つの候補から系統ごとに1つを選び、
+// 明度だけを体の色（アルベド）で動かす。色相のずれは drift を小さく丸めて使う（±4度まで）。
+export function bodyHSL(star, look, light) {
   const p = palette(star);
   const i = Math.abs(look?.drift ?? 0) % p.body.length;
   const [h, s, l] = p.body[i];
-  const hue = h + Math.round((look?.drift ?? 0) / 8);
-  const lum = Math.round(l + (light - 0.5) * 22);
-  return `hsl(${hue} ${s}% ${Math.min(82, Math.max(16, lum))}%)`;
+  return {
+    h: h + Math.round((look?.drift ?? 0) / 8),
+    s,
+    l: Math.min(82, Math.max(16, Math.round(l + (light - 0.5) * 22))),
+  };
+}
+
+export const hsl = (c, dl = 0, ds = 0, dh = 0) =>
+  `hsl(${c.h + dh} ${Math.min(100, Math.max(0, c.s + ds))}% ${Math.min(96, Math.max(4, c.l + dl))}%)`;
+export const hsla = (c, a, dl = 0, ds = 0, dh = 0) =>
+  `hsl(${c.h + dh} ${Math.min(100, Math.max(0, c.s + ds))}% ${Math.min(96, Math.max(4, c.l + dl))}% / ${a})`;
+
+export const bodyFill = (star, look, light) => hsl(bodyHSL(star, look, light));
+
+// 光の向き（docs/art-bible.md 6「光と色に投資する」）。どの生き物も同じ向きから照らす。
+export const LIGHT = { x: -0.38, y: -0.46 };
+
+// 場面の色。恒星の色温度と、生き物の住む場所で変える。
+export function scene(star, place) {
+  const p = palette(star);
+  const deep = place === 'deep';
+  return {
+    sky0: deep ? p.bg : p.panel,
+    sky1: p.bg,
+    haze: p.glow,
+    ground: p.ground,
+    star: p.glow,
+    accent: p.accent,
+    ink: p.ink,
+  };
 }

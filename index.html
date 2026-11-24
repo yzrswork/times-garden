@@ -27,11 +27,13 @@
   .log li { font-size: .85rem; color: var(--text); padding: 2px 0; }
   .log li::before { content: "·"; color: var(--accent); margin-right: 8px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }
-  .card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 10px;
-    padding: 10px 12px 12px; }
-  .art { display: flex; justify-content: center; }
-  .art svg { width: 100%; height: auto; max-width: 132px; }
-  .cx { margin: 2px 0 4px; font-size: .74rem; color: var(--accent); letter-spacing: .04em; }
+  .card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px;
+    padding: 0 0 12px; overflow: hidden; }
+  /* 絵はカードいっぱいに置く（1枚ずつが小さなジオラマなので、額縁に入れない） */
+  .art { display: block; line-height: 0; }
+  .art svg { width: 100%; height: auto; display: block; }
+  .card > :not(.art) { padding-left: 12px; padding-right: 12px; }
+  .cx { margin: 10px 0 4px; font-size: .74rem; color: var(--accent); letter-spacing: .04em; }
   .look { margin: 0 0 6px; font-size: .78rem; }
   .meta, .dim { margin: 0; font-size: .7rem; color: var(--dim);
     font-variant-numeric: tabular-nums; }
