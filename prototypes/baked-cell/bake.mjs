@@ -65,5 +65,6 @@ const kb = b => (b / 1024).toFixed(1);
 console.log(`焼いた枚数 ${cells.length}（${SIZE}x${SIZE}、品質 ${QUALITY}）→ ${OUT}`);
 console.log(`  1枚あたり: ${med(times)}ms（中央値）/ ${kb(med(sizes))}KB（中央値、最小 ${kb(Math.min(...sizes))} 最大 ${kb(Math.max(...sizes))}）`);
 console.log(`  合計: ${((Date.now() - t0) / 1000).toFixed(1)}秒 / ${kb(sum(sizes))}KB`);
+// 焼きは決定論的なので、変わっていない系統は焼き直されない。下は全枚を焼き直した場合の上限。
 const per = med(times), perKB = med(sizes) / 1024;
-console.log(`  48枚に換算: ${(per * 48 / 1000).toFixed(1)}秒 / ${(perKB * 48).toFixed(0)}KB（1日2回なら1日 ${(perKB * 48 * 2 / 1024).toFixed(2)}MB の書き換え）`);
+console.log(`  全系統（48）まで増えた場合の上限: ${(per * 48 / 1000).toFixed(1)}秒 / ${(perKB * 48).toFixed(0)}KB`);
