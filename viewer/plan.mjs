@@ -195,3 +195,99 @@ export function bodyPlan(entry, world) {
     asym: !!look.asym, joint: look.joint || 0,
   };
 }
+
+/* ---------- 細胞の中身（試作08 で足した語彙） ---------- */
+// 単細胞の系統を顕微鏡で覗いたときの設計図。描き方は知らない。
+// bodyPlan() は変えない（図鑑カードの絵は 1px も動かさない）。
+//
+// 語彙:
+//   membranes  入れ子の膜        [{ pts, k }]  k は外膜に対する縮み
+//   nucleus    核                { cx, cy, rx, ry, bands }
+//   organelles 内部器官          [{ cx, cy, rx, ry, kind }]  kind: vacuole | grain | coil
+//   cilia      繊毛              [{ base, tip }]
+//   pseudopods 偽足              [{ base, ctrl, tip, half }]
+//   stripes    構造としての しま  [{ y, w }]  膜と核をまたぐ帯
+//
+// 大きさは「顕微鏡で覗いた構図」なので、生き物の実際の大きさ（sizeStep）ではなく
+// 枠に対する占有率で決める。silhouette は図鑑カードと同じゆがみ方にして、同じ個体だと分かるようにする。
+export function cellPlan(entry, world, { fill = 0.8 } = {}) {
+  const base = bodyPlan(entry, world);
+  const look = entry.look || {}, id = entry.id;
+  const R = (VB / 2) * fill;                       // 外膜の基準半径
+  const ratio = base.h / base.w;                   // 重力による平たさは図鑑と同じ
+  const ring = (k, n = 11) => {
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = (Math.PI * 2 * i) / n;
+      const r = R * k * (1 + wob(id, i) * 0.24);   // 図鑑カードと同じゆがみ方
+      pts.push([C0 + Math.cos(a) * r, C0 + Math.sin(a) * r * ratio]);
+    }
+    return pts;
+  };
+
+  // 膜は3層。外から内へ薄くなる
+  const membranes = [1, 0.9, 0.78].map(k => ({ pts: ring(k), k }));
+
+  // 核は1つ。中心から少しずれ、しまの数だけ帯が走る
+  const nr = R * 0.34;
+  const nucleus = {
+    cx: C0 + wob(id, 31) * R * 0.16, cy: C0 + wob(id, 32) * R * 0.12 * ratio,
+    rx: nr, ry: nr * (0.86 + Math.abs(wob(id, 33)) * 0.2),
+    bands: look.pattern === 'stripes' ? 3 + (Math.abs(look.drift ?? 0) % 3) : 0,
+  };
+
+  // 内部器官。共有の部品を組み合わせるだけで、個体ごとに作り込まない
+  const KINDS = ['vacuole', 'grain', 'coil'];
+  const organelles = [];
+  const nOrg = 4 + (Math.abs(look.drift ?? 0) % 3);
+  for (let i = 0; i < nOrg; i++) {
+    const a = (Math.PI * 2 * i) / nOrg + wob(id, i + 40) * 0.5;
+    const rr = R * (0.44 + Math.abs(wob(id, i + 50)) * 0.2);
+    organelles.push({
+      cx: C0 + Math.cos(a) * rr, cy: C0 + Math.sin(a) * rr * ratio,
+      rx: R * (0.07 + Math.abs(wob(id, i + 60)) * 0.06),
+      ry: R * (0.06 + Math.abs(wob(id, i + 70)) * 0.05),
+      kind: KINDS[Math.abs(Math.round(wob(id, i + 80) * 10)) % KINDS.length],
+    });
+  }
+
+  // 繊毛は縁に沿って並ぶ。単細胞の体のつくりなので、形質ではなく周に合わせて数を決める
+  const cilia = [];
+  const nCil = 54;
+  const outer = membranes[0].pts;
+  for (let i = 0; i < nCil; i++) {
+    const t = (i / nCil) * outer.length;
+    const i0 = Math.floor(t), f = t - i0;
+    const p0 = outer[i0 % outer.length], p1 = outer[(i0 + 1) % outer.length];
+    const x = p0[0] + (p1[0] - p0[0]) * f, y = p0[1] + (p1[1] - p0[1]) * f;
+    const dx = x - C0, dy = (y - C0) / ratio, d = Math.hypot(dx, dy) || 1;
+    const len = R * (0.07 + Math.abs(wob(id, i + 100)) * 0.05);
+    cilia.push({ base: [x, y], tip: [x + (dx / d) * len, y + (dy / d) * len * ratio] });
+  }
+
+  // 偽足は左右の非対称から。いまの決まりでは単細胞に asym は出ない（段階1でそう決めた）
+  const pseudopods = [];
+  if (look.asym) {
+    const n = 1 + (Math.abs(look.drift ?? 0) % 2);
+    for (let i = 0; i < n; i++) {
+      const a = Math.PI * (0.15 + i * 0.7) + wob(id, i + 120) * 0.4;
+      const bx = C0 + Math.cos(a) * R * 0.86, by = C0 + Math.sin(a) * R * 0.86 * ratio;
+      pseudopods.push({
+        base: [bx, by],
+        ctrl: [C0 + Math.cos(a + 0.3) * R * 1.2, C0 + Math.sin(a + 0.3) * R * 1.2 * ratio],
+        tip: [C0 + Math.cos(a) * R * 1.42, C0 + Math.sin(a) * R * 1.42 * ratio],
+        half: R * 0.16,
+      });
+    }
+  }
+
+  // しまは塗りではなく構造として、膜と核をまたぐ帯で出す
+  const stripes = [];
+  if (look.pattern === 'stripes') {
+    const n = 5 + (Math.abs(look.drift ?? 0) % 3);
+    for (let i = 0; i < n; i++)
+      stripes.push({ y: C0 + ((i + 0.5) / n - 0.5) * 2 * R * ratio, w: R * 0.08 });
+  }
+
+  return { ...base, R, ratio, fill, membranes, nucleus, organelles, cilia, pseudopods, stripes };
+}

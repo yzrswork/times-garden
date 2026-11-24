@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Times Garden 試作08 焼きカードの比べ</title>
+<style>
+  :root { --bg:#0a0f16; --panel:#121a24; --text:#e3edf5; --dim:#86979f; --accent:#8fd3f0; }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:24px 16px 48px; background:var(--bg); color:var(--text);
+    font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif; line-height:1.7; font-feature-settings:"palt"; }
+  main { max-width:900px; margin:0 auto; }
+  h1 { font-size:1.1rem; letter-spacing:.12em; margin:0 0 4px; }
+  .sub { margin:0 0 24px; font-size:.76rem; color:var(--dim);
+    font-variant-numeric:tabular-nums; font-family:ui-monospace,Menlo,monospace; }
+  h2 { font-size:.86rem; color:var(--dim); letter-spacing:.08em; margin:28px 0 10px;
+    padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,.08); }
+  .pair { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; }
+  .card { background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:12px;
+    padding:0 0 12px; overflow:hidden; }
+  .card > :not(.art) { padding:0 12px; }
+  .art { display:block; line-height:0; }
+  .art svg, .art img { width:100%; height:auto; display:block; }
+  .lab { margin:10px 0 2px; font-size:.76rem; color:var(--accent); }
+  .meta { margin:0; font-size:.68rem; color:var(--dim); font-variant-numeric:tabular-nums; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(166px,1fr)); gap:12px; }
+  .grid img { width:100%; height:auto; display:block; border-radius:12px 12px 0 0; }
+  .grid .card { padding-bottom:10px; }
+  .grid p { margin:8px 0 0; font-size:.68rem; color:var(--dim); }
+  .note { font-size:.76rem; color:var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <h1>試作08 焼きカードの比べ</h1>
+  <p class="sub" id="sub">読み込み中…</p>
+
+  <h2>いまの図鑑カード（SVG、スマホで描く） と 焼きカード（WebP、Actions で焼く）</h2>
+  <div class="pair" id="pair"></div>
+
+  <h2>一覧に48枚並べたときのモック（焼き画像、同じ絵の複製）</h2>
+  <div class="grid" id="grid"></div>
+  <p class="note">複製なので全部同じ絵だが、並べたときの密度と表示コストを見るためのもの。</p>
+</main>
+<script type="module">
+import { runAll } from '../../engine/world.mjs';
+import { restore, fileName } from '../../engine/observations.mjs';
+import { bestiary } from '../../engine/traits.mjs';
+import { creatureSVG } from '../../viewer/draw.mjs';
+
+const BASE = new URL('../../', import.meta.url);
+const get = async p => (await fetch(new URL(p, BASE))).json();
+const manifest = await get('data/manifest.json');
+const ledger = (await get('data/ledger.json')).issues;
+const [chunks, checkpoints] = await Promise.all([
+  Promise.all(manifest.checkpoints.map(n => get('data/observations/' + fileName(n)))),
+  Promise.all(manifest.checkpoints.map(n => get('data/checkpoints/' + fileName(n)))),
+]);
+const { W } = restore({ manifest, ledger, chunks, checkpoints });
+const e = bestiary(W).find(x => x.id === 1713);
+document.getElementById('sub').textContent =
+  `#${W.issueNo} ・ 対象 id${e.id}（#${e.born} に分かれた）・ ${e.text}`;
+
+const card = (inner, lab, meta) =>
+  `<article class="card"><div class="art">${inner}</div><p class="lab">${lab}</p><p class="meta">${meta}</p></article>`;
+const svg = creatureSVG(e, W, { size: 360 });
+document.getElementById('pair').innerHTML =
+  card(svg, 'いまの図鑑カード（SVG）', `${(new Blob([svg]).size / 1024).toFixed(1)}KB の SVG をスマホが描く`)
+  + card('<img src="./sample/cell-1713.webp" width="360" height="360" alt="焼きカード">', '焼きカード（WebP 360x360）',
+         '12.7KB の画像を置くだけ');
+
+document.getElementById('grid').innerHTML = Array.from({ length: 48 }, (_, i) =>
+  `<article class="card"><img src="./sample/cell-1713.webp" width="360" height="360" loading="${i < 8 ? 'eager' : 'lazy'}" alt=""><p>真核の生き物・目に見えない</p></article>`).join('');
+</script>
+</body>
+</html>
