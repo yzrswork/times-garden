@@ -6,8 +6,10 @@ import { bestiary, CX_JA } from '../engine/traits.mjs';
 import { describe as describeEvent, END_TEXT } from '../engine/events.mjs';
 import { eraOf, ERA_JA, myrOf } from '../engine/era.mjs';
 import { planetAge } from '../engine/planet.mjs';
+import { CIV_JA, DWELL_JA, FALL_JA } from '../engine/civ.mjs';
 import { C } from '../engine/constants.mjs';
 import { creatureSVG } from './draw.mjs';
+import { townSVG } from './town.mjs';
 import { palette } from './palette.mjs';
 
 const BASE = new URL('../', import.meta.url);
@@ -76,8 +78,39 @@ export function render(root, { W, snapshots, problems, ms }) {
   else log.append(el('p', 'dim', '直近60号では大きな出来事はなかった。'));
   root.append(log);
 
-  // 図鑑
   const list = bestiary(W);
+
+  // 文明（docs/creatures.md 段階4）。いまある文明と、滅びた文明の遺跡。
+  if (W.civs?.length || W.ruins?.length) {
+    const sec = el('section', 'civ');
+    sec.append(el('h2', null, '文明'));
+    const grid = el('div', 'towns');
+    for (const c of W.civs ?? []) {
+      const card = el('article', 'card town');
+      const art = el('div', 'art');
+      art.innerHTML = townSVG(c, W);
+      card.append(art);
+      card.append(el('p', 'cx', `${CIV_JA[c.stage] ?? c.stage}${c.dwelling ? '・' + (DWELL_JA[c.dwelling] ?? c.dwelling) : ''}`));
+      const owner = list.find(e => e.id === c.id);
+      if (owner) card.append(el('p', 'look', `${owner.traits.join('、')}の系統`));
+      card.append(el('p', 'meta', `#${c.from} から・${last.issueNo - c.from}号`));
+      grid.append(card);
+    }
+    for (const r of [...(W.ruins ?? [])].reverse()) {
+      const card = el('article', 'card town');
+      const art = el('div', 'art');
+      art.innerHTML = townSVG(r, W, { ruin: true });
+      card.append(art);
+      card.append(el('p', 'cx', `${CIV_JA[r.stage] ?? r.stage}の遺跡`));
+      card.append(el('p', 'look', FALL_JA[r.why] ?? r.why));
+      card.append(el('p', 'meta', `#${r.from}〜#${r.to}${r.dwelling ? '・' + (DWELL_JA[r.dwelling] ?? r.dwelling) : ''}`));
+      grid.append(card);
+    }
+    sec.append(grid);
+    root.append(sec);
+  }
+
+  // 図鑑
   const sec = el('section', 'bestiary');
   sec.append(el('h2', null, `いま生きている系統 ${list.length}`));
   if (era === 'civ') sec.append(el('p', 'dim', '文明の時代。1号が数千年しか進まないので、進化と気候はほとんど動かない。'));
@@ -98,7 +131,8 @@ export function render(root, { W, snapshots, problems, ms }) {
       art.innerHTML = creatureSVG(e, W, { size: 120 });
     }
     card.append(art);
-    card.append(el('p', 'cx', `${CX_JA[e.cx] || '生き物'}・${e.sizeLabel}`));
+    const civ = (W.civs ?? []).find(c => c.id === e.id);
+    card.append(el('p', 'cx', `${CX_JA[e.cx] || '生き物'}・${e.sizeLabel}${civ ? `・${CIV_JA[civ.stage] ?? ''}` : ''}`));
     if (e.traits.length) card.append(el('p', 'look', e.traits.join('、')));
     card.append(el('p', 'meta', `${e.place}・#${e.born} に分かれた`));
     grid.append(card);
@@ -113,7 +147,8 @@ export function render(root, { W, snapshots, problems, ms }) {
   for (const v of W.volumes) {
     const li = el('li');
     li.append(el('span', 'num', `${v.planetNo}`));
-    li.append(el('span', null, `${STAR_JA[v.star] ?? v.star}・#${v.from}〜#${v.to}・約${(v.gyr * 10).toFixed(1)}億年・最大の複雑さ ${CX_JA[v.maxCx] || 'なし'}`));
+    const civ = v.civ ? `・文明は${CIV_JA[v.civ] ?? v.civ}まで` : '';
+    li.append(el('span', null, `${STAR_JA[v.star] ?? v.star}・#${v.from}〜#${v.to}・約${(v.gyr * 10).toFixed(1)}億年・最大の複雑さ ${CX_JA[v.maxCx] || 'なし'}${civ}`));
     li.append(el('span', 'end', END_TEXT[v.endKind] ?? v.endKind));
     ol.append(li);
   }

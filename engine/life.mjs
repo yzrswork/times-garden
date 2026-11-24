@@ -72,7 +72,14 @@ export function lifeStep(W, r, innov, ev) {
   const before = W.species.length;
   W.species = W.species.filter(s => s.pop > C.popMin);
   W.extinct += before - W.species.length;
-  if (W.species.length > C.maxSpecies) { W.species.sort((a, b) => b.pop - a.pop); W.species.length = C.maxSpecies; }
+  // 系統の数を上限で切るのは計算量のため。考える生き物は、生まれたときの個体数が親の15%しかなく、
+  // 系統が上限いっぱいの惑星では現れた号に切り捨てられていた（eco-3 までの見落とし）。
+  // そうなると世界は文明の時代に入ったまま、担う系統がいないので何も起きなくなる（柱3）。
+  // いちばん意味のある系統なので、個体数が小さくても切らない（docs/creatures.md 段階4）。
+  if (W.species.length > C.maxSpecies) {
+    W.species.sort((a, b) => (b.cx >= C.maxCx) - (a.cx >= C.maxCx) || b.pop - a.pop);
+    W.species.length = C.maxSpecies;
+  }
   if (W.species.length === 0 && W.life) { W.life = false; ev.push({ k: 'sterile' }); }
 }
 

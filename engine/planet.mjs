@@ -3,6 +3,7 @@
 // 終わり方もガチャ。決定論は保つ（次の星の種は、切り替わる号の内容から作る）。
 import { C } from './constants.mjs';
 import { eraOf, planned } from './era.mjs';
+import { civReach } from './civ.mjs';
 
 // 終わり方。珍しさは docs/creatures.md の表。
 export const END_KINDS = ['nextStar', 'scorched', 'dead', 'frozen', 'impact', 'exodus'];
@@ -30,6 +31,7 @@ function causeOf(W) {
 // まだ生命が生まれていない惑星は「絶えた」ではないので、1年の区切りまで待つ（誕生の時代）。
 export function endingFor(W) {
   if (!planned(W, W.issueNo)) return null; // 配分を入れる前の号では終わらせない（歴史を変えない）
+  if (W.exodus) return 'exodus'; // 文明が星を出た（伝説級。docs/creatures.md「文明が星を出る」）
   if (planetAge(W) >= C.yearIssues) return W.species.length ? 'nextStar' : causeOf(W); // 1年の区切り
   if (W.flags.abio && W.sterileSince && W.issueNo - W.sterileSince >= C.deadAfter) return causeOf(W);
   return null;
@@ -52,6 +54,8 @@ export function makeVolume(W, endKind) {
     era: eraOf(W), endKind,
     maxCx: W.species.reduce((m, s) => Math.max(m, s.cx), 0),
     species: W.species.length, lineages: W.nextId - 1, extinct: W.extinct,
+    // 文明がどこまで届いたか（年表に出す）。遺跡だけ残った星も、届いた段階は残る
+    civ: civReach(W), ruins: W.ruins.length,
     flags: { ...W.flags },
   };
 }

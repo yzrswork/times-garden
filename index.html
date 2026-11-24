@@ -27,6 +27,8 @@
   .log li { font-size: .85rem; color: var(--text); padding: 2px 0; }
   .log li::before { content: "·"; color: var(--accent); margin-right: 8px; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }
+  /* 文明: 町の絵は横に長いので、1列か2列で大きく見せる */
+  .towns { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
   .card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 12px;
     padding: 0 0 12px; overflow: hidden; }
   /* 絵はカードいっぱいに置く（1枚ずつが小さなジオラマなので、額縁に入れない） */
@@ -42,6 +44,7 @@
   .loading { color: var(--dim); font-size: .85rem; }
   @media (max-width: 560px) {
     .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .towns { grid-template-columns: 1fr; gap: 10px; }
     .facts { grid-template-columns: 1fr 1fr; gap: 0 12px; }
     .facts dt { font-size: .66rem; }
     .facts dd { font-size: .82rem; margin-bottom: 6px; }

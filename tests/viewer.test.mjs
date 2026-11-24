@@ -5,6 +5,8 @@ import assert from 'node:assert/strict';
 import { runAll } from '../engine/world.mjs';
 import { bestiary, FORMS, COVERS, LIMBS, PATTERNS, EYE_KINDS } from '../engine/traits.mjs';
 import { creatureSVG } from '../viewer/draw.mjs';
+import { townSVG, TOWN_STAGES, VB_W, VB_H } from '../viewer/town.mjs';
+import { CIV_STAGES, DWELLINGS } from '../engine/civ.mjs';
 import { palette, bodyFill } from '../viewer/palette.mjs';
 import { LEDGER, MAIN_SEED, MAIN, synthLedger } from './helpers.mjs';
 
@@ -99,4 +101,64 @@ test('合成の惑星でも、どの恒星でも図鑑が作れる', () => {
     const { W } = runAll('viewer-' + k, synthLedger('viewer-' + k, 700));
     for (const e of bestiary(W)) assert.doesNotMatch(creatureSVG(e, W), /NaN|undefined/);
   }
+});
+
+/* ---------- 文明の町（viewer/town.mjs、docs/creatures.md 段階4） ---------- */
+
+test('町の姿: 段階と住まいのどの組み合わせでも、壊れていない SVG になる', () => {
+  assert.deepEqual(TOWN_STAGES, CIV_STAGES, '町の段階が engine/civ.mjs と合っていない');
+  let n = 0, max = 0;
+  for (const stage of TOWN_STAGES) for (const dwelling of DWELLINGS) for (const star of STARS) for (const ruin of [false, true]) {
+    const svg = townSVG({ id: 7 + n, stage, dwelling }, { star }, { ruin });
+    assert.doesNotMatch(svg, /NaN|undefined|Infinity/, `${stage}/${dwelling}/${star}${ruin ? '/遺跡' : ''}`);
+    assert.match(svg, /^<svg /); assert.match(svg, /<\/svg>$/);
+    max = Math.max(max, svg.length); n++;
+  }
+  assert.ok(n >= 60, `組み合わせが少ない（${n}）`);
+  assert.ok(max < 20000, `町の SVG が大きすぎる（${max}バイト）`);
+});
+
+test('町の姿: 段階が上がるほど建物が増えて高くなる', () => {
+  const boxes = svg => [...svg.matchAll(/<rect x="([\d.-]+)" y="([\d.-]+)" width="([\d.]+)" height="([\d.]+)"/g)]
+    .map(m => ({ y: Number(m[2]), h: Number(m[4]) })).filter(b => b.h < VB_H && b.y > 0);
+  let prevN = 0, prevTop = VB_H;
+  for (const stage of TOWN_STAGES) {
+    const b = boxes(townSVG({ id: 3, stage, dwelling: 'earth' }, { star: 'blue' }));
+    const top = Math.min(...b.map(x => x.y));
+    assert.ok(b.length >= prevN, `${stage}: 建物が減った（${prevN} → ${b.length}）`);
+    assert.ok(top <= prevTop, `${stage}: 建物が低くなった（上端 ${prevTop} → ${top}）`);
+    prevN = b.length; prevTop = top;
+  }
+  assert.ok(prevTop < VB_H * 0.3, `未来都市が高くない（上端 ${prevTop}）`);
+});
+
+test('町の姿: 住まいの種類で並べ方が変わる。遺跡は別の絵になる', () => {
+  const seen = new Map();
+  for (const d of DWELLINGS) seen.set(d, townSVG({ id: 5, stage: 'town', dwelling: d }, { star: 'blue' }));
+  assert.equal(new Set(seen.values()).size, DWELLINGS.length, '住まいが違っても同じ絵になっている');
+  // 地下の町は、建物が地表より下にある
+  const under = [...seen.get('under').matchAll(/<rect x="[\d.-]+" y="([\d.-]+)"/g)].map(m => Number(m[1]));
+  assert.ok(Math.min(...under.filter(y => y > 0)) >= 50, '地下の町の建物が地上に出ている');
+  const town = townSVG({ id: 5, stage: 'town', dwelling: 'earth' }, { star: 'blue' });
+  assert.notEqual(town, townSVG({ id: 5, stage: 'town', dwelling: 'earth' }, { star: 'blue' }, { ruin: true }));
+});
+
+test('町の姿: 決定論（同じ文明なら同じ絵）と、恒星の色が出ること', () => {
+  const a = townSVG({ id: 9, stage: 'city', dwelling: 'earth' }, { star: 'red' });
+  assert.equal(a, townSVG({ id: 9, stage: 'city', dwelling: 'earth' }, { star: 'red' }));
+  assert.notEqual(a, townSVG({ id: 10, stage: 'city', dwelling: 'earth' }, { star: 'red' }));
+  for (const star of STARS) {
+    const svg = townSVG({ id: 9, stage: 'city', dwelling: 'earth' }, { star });
+    const hue = palette(star).body[0][0];
+    assert.ok(svg.includes(`hsl(${hue} `), `${star}: 恒星のパレットの色相（${hue}）が使われていない`);
+  }
+});
+
+test('町の姿: 知らない段階や住まいでも落ちない', () => {
+  for (const civ of [null, {}, { id: 1, stage: 'なにか', dwelling: 'どこか' }, { id: NaN, stage: 'city' }]) {
+    const svg = townSVG(civ, { star: 'blue' });
+    assert.doesNotMatch(svg, /NaN|undefined|Infinity/, JSON.stringify(civ));
+  }
+  assert.doesNotMatch(townSVG({ id: 1, stage: 'city', dwelling: 'earth' }, {}), /NaN|undefined/);
+  assert.ok(townSVG({ id: 1, stage: 'city', dwelling: 'earth' }, { star: 'blue' }).includes(`viewBox="0 0 ${VB_W} ${VB_H}"`));
 });

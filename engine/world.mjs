@@ -9,14 +9,18 @@ import { lifeStep, massKill, firstLife } from './life.mjs';
 import { planetLook } from './traits.mjs';
 import { timingFor } from './era.mjs';
 import { birthEvents, endingFor, trackSterile, makeVolume, nextSeed } from './planet.mjs';
+import { civStep } from './civ.mjs';
 
 // sim の計算か、状態 W の形を変えたら上げる。定数の変更は RULES_HASH が自動で拾う。
 // eco-2: 見た目の層（惑星の重力と大気、系統の見た目の性質）を状態に足した。計算そのものは変えていない。
 // eco-3: 惑星の1年（docs/creatures.md 段階3）。1号の時間を時代ごとに変え、誕生の時代を足し、
 //   観測の終わりと次の星への切り替えを入れた。timingFrom より前の号は1号2,000万年のままなので、
 //   主役の惑星の #1 から #264 の記録は eco-1、eco-2 とビット単位で同じ（tests/era.test.mjs が固定）。
+// eco-4: 文明（docs/creatures.md 段階4）。文明の段階、住まいの種類、遺跡、星を出ることを足した。
+//   文明の計算は文明の時代の号でだけ動き、乱数も文明だけの流れから作るので、形の時代までの歴史は変わらない
+//   （tests/civ.test.mjs が固定）。状態に civs、ruins、exodus が増えたので版を上げる。
 // 状態の形が変わると、前の版の途中経過はそのままでは続きを計算できないので、版を上げて作り直す。
-export const SIM_VERSION = 'eco-3';
+export const SIM_VERSION = 'eco-4';
 export const RULES_HASH = hash(SIM_VERSION + '\n' + JSON.stringify(C));
 
 // timingFrom: この号から新しい時間の配分で進める。主役の惑星は creatures.md のとおり途中から
@@ -43,6 +47,8 @@ export function initWorld(seed, { timingFrom = 1, planetNo = 1, planetFrom = 0, 
     // 惑星の一生（docs/creatures.md「惑星の1年」）
     timingFrom, planetNo, planetFrom, plan: timingFrom <= planetFrom + 1, volumes,
     sterileSince: 0, lastGiant: 0,
+    // 文明（docs/creatures.md「文明」）。文明の時代の号でだけ動く（engine/civ.mjs）
+    civs: [], ruins: [], exodus: 0,
   };
 }
 
@@ -117,6 +123,11 @@ export function stepIssue(W, issue) {
       if (impact.size === 'giant') W.lastGiant = W.issueNo;
       ev.push({ k: 'impact', size: impact.size, lost: r4(lost) });
     }
+    // 塵と洪水玄武岩は1号の中の計算で薄れていくので、計算をしないこの時代でも薄らせる
+    // （気候の計算はしないので結果には効かない。状態に残り続けないようにするため）
+    W.dust *= C.dustDecay; W.lip *= C.lipDecay;
+    // 文明の歩み（隕石と洪水玄武岩を滅びる理由として読むので、打撃のあとに呼ぶ）
+    civStep(W, issue, ev);
   }
   // 超大陸（周期の始めの1号で告知する）
   const ph = W.superPhase % C.superPeriod;
@@ -151,10 +162,14 @@ function snapshot(W, issue, ev) {
   let ocean = 0, land = 0, maxCx = 0;
   for (const s of W.species) { if (s.hab === 'ocean') ocean += s.pop; else land += s.pop; maxCx = Math.max(maxCx, s.cx); }
   const top = W.species.reduce((m, s) => Math.max(m, s.pop), 0), tot = ocean + land;
+  // 文明は、あるときだけ記録に書く（文明のない号の記録は、文明を足す前と1ビットも変わらない）
+  const civ = W.civs.length || W.ruins.length
+    ? { civs: W.civs.map(c => ({ id: c.id, stage: c.stage, dwelling: c.dwelling })), ruins: W.ruins.length }
+    : null;
   return {
     issueNo: issue.issueNo, date: issue.date, edition: issue.edition, gyr: r4(W.t / 1000), T: r4(W.T), CO2: Math.round(W.CO2), O2: r4(W.O2),
     snowball: W.snowball, ocean: r4(W.ocean), land: r4(W.land), nSpecies: W.species.length, bioOcean: r4(ocean), bioLand: r4(land),
-    maxCx, topShare: tot > 0 ? r4(top / tot) : 0, extinctTotal: W.extinct, events: ev,
+    maxCx, topShare: tot > 0 ? r4(top / tot) : 0, extinctTotal: W.extinct, ...(civ ?? {}), events: ev,
   };
 }
 

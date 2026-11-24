@@ -23,7 +23,8 @@ test('主役の惑星の最初の238号: 全史のハッシュと主な出来事
   const ledger = LEDGER.slice(0, 238);
   const { W, snapshots } = runAll(MAIN_SEED, ledger, MAIN);
   assert.equal(W.star, 'blue');
-  assert.equal(historyHash(summarize(W, snapshots)), '73ab1041d425913e4bcb64af5a718b51');
+  // eco-4（文明）で版の文字列が変わったので、この値も変わった。1号ごとの記録（chainHash）は eco-1 と同じまま
+  assert.equal(historyHash(summarize(W, snapshots)), '0c1430e61524d53ecc7ffae93370e1d9');
   const ev = snapshots.flatMap(s => s.events.filter(e => !['super'].includes(e.k) && !(e.k === 'impact' && e.size === 'small')).map(e => `#${s.issueNo} ${describeEvent(e)}`));
   assert.deepEqual(ev, [
     '#6 海で最初の生命が生まれた', '#8 光合成をする生き物が現れた', '#42 大気に酸素がたまり始めた（大酸化イベント）',

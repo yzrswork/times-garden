@@ -1,4 +1,5 @@
-// 出来事の種類と、日本語の説明。計算（world.mjs、life.mjs）は種類と数だけを記録し、文章はここで作る。
+// 出来事の種類と、日本語の説明。計算（world.mjs、life.mjs、civ.mjs）は種類と数だけを記録し、文章はここで作る。
+import { CIV_JA, DWELL_JA, FALL_JA } from './civ.mjs';
 const TEXT = {
   abio: '海で最初の生命が生まれた',
   abio2: '生命がふたたび生まれた',
@@ -20,6 +21,15 @@ const TEXT = {
   system: '残りの塵が集まって惑星になった',
   surface: '地表が固まり、水がたまって海になった',
   newPlanet: '観測所が次の星へ移った',
+  exodus: '文明が星を出ていった',
+};
+// 文明の段階（docs/creatures.md「文明」）。住まいの種類は、集落の段階から文章に入る。
+const CIV = {
+  trace: '火と道具の痕跡が現れた',
+  village: '集落ができた',
+  town: '町が広がった',
+  city: 'ビルの街ができた',
+  future: 'まぶしい未来都市ができた',
 };
 // 観測の終わり方（docs/creatures.md「惑星の最期と引き継ぎ」）
 const END = {
@@ -32,11 +42,13 @@ const END = {
 };
 const IMPACT = { small: '小さな隕石が落ちた', large: '大きな隕石が落ちた', giant: '巨大な隕石が落ちた' };
 
-export const EVENT_KINDS = [...Object.keys(TEXT), 'impact', 'mass', 'planetEnd'];
+export const EVENT_KINDS = [...Object.keys(TEXT), 'impact', 'mass', 'planetEnd', 'civ', 'civFall'];
 export const END_TEXT = END;
 
 export function describe(e) {
   if (e.k === 'planetEnd') return '観測を終えた: ' + (END[e.end] ?? e.end ?? '理由は不明');
+  if (e.k === 'civ') return (CIV[e.stage] ?? e.stage) + (e.dwell ? `（${DWELL_JA[e.dwell] ?? e.dwell}）` : '');
+  if (e.k === 'civFall') return `文明が滅びた（${CIV_JA[e.stage] ?? e.stage}・${FALL_JA[e.why] ?? e.why}）`;
   if (e.k === 'impact') return IMPACT[e.size];
   if (e.k === 'mass') return `大量絶滅（系統の${Math.round(e.lost * 100)}%が消えた）`;
   return TEXT[e.k] ?? e.k;
