@@ -16,10 +16,12 @@ const viaText = cp => JSON.parse(JSON.stringify(cp) + '\n');
 const longLedger = (seed, n = 900) => synthLedger(seed, n);
 
 // docs/creatures.md「いまの主役の惑星」: 配分を入れた号から先だけを新しい配分で進める。
-// 台帳はいま #264 までなので、主役の惑星の歴史はまるごと配分の前にあたり、eco-1 と一致しなければならない。
+// 固定値は配分を入れる前（#265 より前）の歴史。台帳は毎日伸びるので、号数で切ってから比べる。
+// 配分を入れたあとの歴史は、凍結した途中経過と観測データ（pipeline/advance.mjs）が守る。
 test('主役の惑星の #264 までの歴史は eco-1 とビット単位で同じ', () => {
-  assert.ok(MAIN_TIMING_FROM > LEDGER.length, `台帳が配分を入れる号（#${MAIN_TIMING_FROM}）に届いたら、この固定値を見直す`);
   for (const [n, want] of [[238, '569a8463b771ebc02d3eedf547be73c8'], [264, '9d939ce2f0ae183eb9ee58ec654bf5e5']]) {
+    assert.ok(n < MAIN_TIMING_FROM, `#${n} は配分を入れる号（#${MAIN_TIMING_FROM}）より前でなければ、この固定値は使えない`);
+    assert.ok(LEDGER.length >= n, `台帳が${n}号に足りない（${LEDGER.length}号）`);
     const { W, snapshots } = runAll(MAIN_SEED, LEDGER.slice(0, n), MAIN);
     assert.equal(chainHash(snapshots), want, `${n}号の歴史が変わっている`);
     assert.equal(W.planetNo, 1, '配分の前に次の星へ移ってしまった');

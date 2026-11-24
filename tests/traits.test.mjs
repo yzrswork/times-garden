@@ -9,22 +9,28 @@ import { planetLook, firstLook, inheritLook, bodySize, bodyColor, bestiary, desc
 import { LEDGER, MAIN_SEED, NO_PLAN, synthLedger } from './helpers.mjs';
 
 // 合成の号は helpers.mjs の synthLedger と同じ作り方。基準値は見た目の層を足す前（eco-1）に取った。
+// 主役の惑星の台帳は毎日伸びるので、固定値を比べるときは必ず号数で切る（切らないと新しい号が入った日に落ちる）。
 // ここでは時間の配分を使わない設定（NO_PLAN、1号いつも2,000万年）で回す。eco-3 の時間の配分は
 // 歴史を変える意図の変更なので、それとは分けて「見た目の層だけでは歴史が変わらない」ことを確かめる。
+// count は固定値を取ったときの号数。台帳の切り出しは下のテストが1か所でやる（各行で切ると忘れる）。
 const HISTORY = [
-  { what: '主役の惑星 238号', ledger: () => LEDGER.slice(0, 238), seed: MAIN_SEED, chain: '569a8463b771ebc02d3eedf547be73c8' },
-  { what: '主役の惑星 264号', ledger: () => LEDGER, seed: MAIN_SEED, chain: '9d939ce2f0ae183eb9ee58ec654bf5e5' },
-  { what: '合成 base-red 600号', ledger: () => synthLedger('base-red', 600), seed: 'base-red', chain: '694c33b7bae8bb500ea6ee09922c5d95' },
-  { what: '合成 base-yellow 600号', ledger: () => synthLedger('base-yellow', 600), seed: 'base-yellow', chain: 'f919babeacc59aadb9551b5c334aaa42' },
-  { what: '合成 base-blue 600号', ledger: () => synthLedger('base-blue', 600), seed: 'base-blue', chain: '3567d5dc16fdf8cee4d0264bdf79d5c0' },
+  { what: '主役の惑星', count: 238, ledger: () => LEDGER, seed: MAIN_SEED, chain: '569a8463b771ebc02d3eedf547be73c8' },
+  { what: '主役の惑星', count: 264, ledger: () => LEDGER, seed: MAIN_SEED, chain: '9d939ce2f0ae183eb9ee58ec654bf5e5' },
+  { what: '合成 base-red', count: 600, ledger: () => synthLedger('base-red', 600), seed: 'base-red', chain: '694c33b7bae8bb500ea6ee09922c5d95' },
+  { what: '合成 base-yellow', count: 600, ledger: () => synthLedger('base-yellow', 600), seed: 'base-yellow', chain: 'f919babeacc59aadb9551b5c334aaa42' },
+  { what: '合成 base-blue', count: 600, ledger: () => synthLedger('base-blue', 600), seed: 'base-blue', chain: '3567d5dc16fdf8cee4d0264bdf79d5c0' },
 ];
 
 // docs/creatures.md 確定事項5: 見た目の値は気候や個体数の計算には使わない（これまでの歴史を変えない）。
 // 見た目の乱数を計算の乱数 r から取ってしまうと、ここが落ちる。
 test('見た目の層は歴史を変えない: 1号ごとの記録のハッシュが eco-1 と一致する', () => {
   for (const h of HISTORY) {
-    const { snapshots } = runAll(h.seed, h.ledger(), NO_PLAN);
-    assert.equal(chainHash(snapshots), h.chain, `${h.what} の歴史が変わっている`);
+    const all = h.ledger();
+    assert.ok(all.length >= h.count, `${h.what}: 台帳が${h.count}号に足りない（${all.length}号）`);
+    const ledger = all.slice(0, h.count); // 主役の惑星の台帳は毎日伸びる。固定値と比べる前に必ず切る
+    const { snapshots } = runAll(h.seed, ledger, NO_PLAN);
+    assert.equal(snapshots.length, h.count);
+    assert.equal(chainHash(snapshots), h.chain, `${h.what} ${h.count}号の歴史が変わっている`);
   }
 });
 

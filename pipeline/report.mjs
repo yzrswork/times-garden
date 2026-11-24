@@ -5,14 +5,15 @@ import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { runAll } from '../engine/world.mjs';
 import { describe } from '../engine/events.mjs';
-import { PATHS, MAIN_SEED } from './config.mjs';
+import { PATHS, MAIN_SEED, MAIN_TIMING_FROM } from './config.mjs';
 
 const EDITION = { morning: '朝刊', midday: '昼刊' };
 // 毎号のように起きる小さな出来事は省く
 const notable = e => !(e.k === 'super' || (e.k === 'impact' && e.size === 'small'));
 
-export function report(ledger, from, seed = MAIN_SEED) {
-  const { snapshots } = runAll(seed, ledger);
+// 公開データ（data/）と同じ世界を報告する。時間の配分を渡し忘れると、別の歴史の数字を書いてしまう。
+export function report(ledger, from, { seed = MAIN_SEED, timingFrom = MAIN_TIMING_FROM } = {}) {
+  const { snapshots } = runAll(seed, ledger, { timingFrom });
   const lines = [];
   for (const s of snapshots.slice(from)) {
     const ev = s.events.filter(notable).map(describe);

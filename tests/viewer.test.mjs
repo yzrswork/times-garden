@@ -6,12 +6,12 @@ import { runAll } from '../engine/world.mjs';
 import { bestiary, FORMS, COVERS, LIMBS, PATTERNS, EYE_KINDS } from '../engine/traits.mjs';
 import { creatureSVG } from '../viewer/draw.mjs';
 import { palette, bodyFill } from '../viewer/palette.mjs';
-import { LEDGER, MAIN_SEED, synthLedger } from './helpers.mjs';
+import { LEDGER, MAIN_SEED, MAIN, synthLedger } from './helpers.mjs';
 
 const STARS = ['red', 'yellow', 'blue'];
 
 test('図鑑の姿: 主役の惑星のすべての系統が、壊れていない SVG になる', () => {
-  const { W } = runAll(MAIN_SEED, LEDGER);
+  const { W } = runAll(MAIN_SEED, LEDGER, MAIN);
   for (const e of bestiary(W)) {
     const svg = creatureSVG(e, W);
     assert.doesNotMatch(svg, /NaN|undefined|Infinity/, `#${e.id} の SVG が壊れている`);
@@ -38,7 +38,7 @@ test('見た目のどの組み合わせでも壊れない（体の型、覆い�
 });
 
 test('決定論: 同じ系統からは同じ SVG が出る', () => {
-  const { W } = runAll(MAIN_SEED, LEDGER);
+  const { W } = runAll(MAIN_SEED, LEDGER, MAIN);
   const a = bestiary(W).map(e => creatureSVG(e, W));
   const b = bestiary(W).map(e => creatureSVG(e, W));
   assert.deepEqual(a, b);

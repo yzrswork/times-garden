@@ -6,9 +6,10 @@ import { convertGraph, GraphFormatError } from '../pipeline/convert.mjs';
 import { appendIssues, IngestError } from '../pipeline/ingest.mjs';
 import { buildFiles, planWrites, FreezeError } from '../pipeline/advance.mjs';
 import { restore, fileName } from '../engine/observations.mjs';
-import { summarize, historyHash, SIM_VERSION } from '../engine/world.mjs';
+import { summarize, historyHash, SIM_VERSION, runAll } from '../engine/world.mjs';
 import { CheckpointError } from '../engine/checkpoint.mjs';
-import { ROOT, LEDGER, readJSON, makeGraph } from './helpers.mjs';
+import { report } from '../pipeline/report.mjs';
+import { ROOT, LEDGER, MAIN_SEED, MAIN, readJSON, makeGraph } from './helpers.mjs';
 
 const base = [
   { no: 1, arts: [{ kw: ['a', 'b'], temp: 70, gem: true }, { kw: ['b', 'c'], temp: 50 }] },
@@ -100,4 +101,35 @@ test('data/: 公開データから、ブラウザと同じ手順で全史を組�
 test('台帳: 号番号は1から連番で、id は重ならない', () => {
   LEDGER.forEach((e, i) => assert.equal(e.issueNo, i + 1));
   assert.equal(new Set(LEDGER.map(e => e.id)).size, LEDGER.length);
+});
+
+// 毎日の更新のコミットメッセージと実行結果の概要は report.mjs が書く。
+// 時間の配分（timingFrom）を渡し忘れると、公開データとは別の歴史の数字を書いてしまう。
+// 2026-11-24 に実際に起きた不具合の回帰テスト。
+test('報告は公開データと同じ世界を書く（時間の配分を渡し忘れていない）', () => {
+  const last = runAll(MAIN_SEED, LEDGER, MAIN).snapshots.at(-1);
+  const tail = report(LEDGER, LEDGER.length - 1).at(-1);
+  assert.match(tail, new RegExp(`^#${last.issueNo} の惑星: `), tail);
+  assert.ok(tail.includes(`約${(last.gyr * 10).toFixed(1)}億年目`), `年代が合わない: ${tail}`);
+  assert.ok(tail.includes(`気温${last.T.toFixed(1)}℃`), `気温が合わない: ${tail}`);
+  assert.ok(tail.includes(`系統${last.nSpecies}`), `系統の数が合わない: ${tail}`);
+  // 配分を渡さないと別の歴史になることを確かめる（そうでないとこのテストは何も守らない）
+  const wrong = runAll(MAIN_SEED, LEDGER, { timingFrom: 1 }).snapshots.at(-1);
+  assert.notDeepEqual(
+    [wrong.nSpecies, wrong.maxCx, Math.round(wrong.gyr * 10)],
+    [last.nSpecies, last.maxCx, Math.round(last.gyr * 10)],
+    'いまの台帳では2つの歴史が同じ数字になり、このテストが守りになっていない',
+  );
+});
+
+// 新しく取り込んだ号で起きた出来事も、公開データと同じ歴史のものでなければならない。
+test('報告の出来事は、公開データと同じ歴史のもの', () => {
+  const { snapshots } = runAll(MAIN_SEED, LEDGER, MAIN);
+  const from = Math.max(0, LEDGER.length - 60);
+  const want = snapshots.slice(from).flatMap(s => s.events
+    .filter(e => !(e.k === 'super' || (e.k === 'impact' && e.size === 'small')))
+    .map(() => s.issueNo));
+  const lines = report(LEDGER, from).slice(0, -1); // 最後の1行は惑星の様子
+  const got = lines.filter(l => l !== '大きな出来事はなかった').map(l => Number(l.match(/^#(\d+)/)[1]));
+  assert.deepEqual(got, [...new Set(want)]);
 });
