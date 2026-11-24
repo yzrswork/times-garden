@@ -88,6 +88,75 @@ function formParts(look, id, w, h) {
   return { body, back };
 }
 
+/* ---------- 模様の翻訳（pattern ごとに、描き方を知らない形で持つ） ---------- */
+// しま   膜: 帯を横切る桟          核: 球に巻きつく細い弧
+// 斑点   膜: 帯の上に散る色素の斑  核: 球の上に散る斑（縁ほど潰れる）
+// 帯     膜: 太い帯が帯を横断      核: 太い帯が球に巻きつく
+// 無地   何も足さない（無地であることが形質）
+// 光る   模様としては無地。発光は描く側が別に扱う
+function membranePattern(look, id, nRung, D) {
+  const k = look.pattern;
+  if (k === 'stripes') {
+    const items = [];
+    for (let i = 0; i < nRung; i++) items.push({ a: (Math.PI * 2 * i) / nRung });
+    return { kind: 'rungs', items };
+  }
+  if (k === 'spots') {
+    const n = 16 + D;
+    const items = [];
+    for (let i = 0; i < n; i++) items.push({
+      a: (Math.PI * 2 * i) / n + wob(id, i + 300) * 0.14,
+      t: 0.3 + Math.abs(wob(id, i + 320)) * 0.4,      // 帯の内側からの位置
+      r: 0.1 + Math.abs(wob(id, i + 340)) * 0.1,      // 帯の幅に対する大きさ
+    });
+    return { kind: 'spots', items };
+  }
+  if (k === 'bands') {
+    const n = 5 + Math.round(D / 4);
+    const items = [];
+    for (let i = 0; i < n; i++) items.push({
+      a: (Math.PI * 2 * i) / n + wob(id, i + 360) * 0.1,
+      half: 0.1 + Math.abs(wob(id, i + 380)) * 0.05,  // 角度の半幅
+    });
+    return { kind: 'bands', items };
+  }
+  return { kind: 'none', items: [] };
+}
+
+function nucleusPattern(look, id, nuc, nArc) {
+  const k = look.pattern;
+  const tilt = 0.5 + wob(id, 34) * 0.12;             // 軸の傾き。巻きつき方に出る
+  const arcsAt = (n, wScale) => {
+    const items = [];
+    for (let i = 0; i < n; i++) {
+      const th = (-1 + (2 * (i + 0.5)) / n) * 1.26;  // 両極の手前まで
+      const u = Math.sin(th), cth = Math.cos(th);
+      items.push({
+        y: nuc.cy + nuc.ry * u, halfW: nuc.rx * cth,
+        bulge: nuc.ry * tilt * u * 1.5,
+        w: (nuc.ry * 0.17 * cth + nuc.ry * 0.04) * wScale,
+      });
+    }
+    return items;
+  };
+  if (k === 'stripes') return { kind: 'arcs', items: arcsAt(nArc, 1) };
+  if (k === 'bands') return { kind: 'arcs', items: arcsAt(Math.max(3, Math.round(nArc / 3)), 2.6) };
+  if (k === 'spots') {
+    const n = 11, items = [];
+    for (let i = 0; i < n; i++) {
+      const a = i * Math.PI * (3 - Math.sqrt(5)), rr = Math.sqrt((i + 0.5) / n) * 0.86;
+      const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+      items.push({
+        x: nuc.cx + x * nuc.rx, y: nuc.cy + y * nuc.ry,
+        rx: nuc.rx * 0.11 * Math.sqrt(Math.max(0.15, 1 - x * x)),  // 縁ほど潰れる
+        ry: nuc.ry * 0.11,
+      });
+    }
+    return { kind: 'spots', items };
+  }
+  return { kind: 'none', items: [] };
+}
+
 // 放射腕の腕。本数も長さも先の形も、親から受け継ぐ形質から決める（id の雑音では決めない）。
 // 一覧でいちばん効くのはシルエットなので、受け継がれる差がそのまま輪郭の差になるようにする。
 //   本数 ← 色味のずれ drift（3〜8本）。少ないほど長く太く、多いほど短く細い
@@ -225,41 +294,30 @@ export function cellPlan(entry, world, { fill = 0.8 } = {}) {
     return pts;
   };
 
-  // 膜は「線」ではなく厚みのある帯。縞はその帯を横切る桟として出す
+  // 形質の数への変換。剰余で畳むと別の形質が同じ姿になるので、単調に増やして上限で飽和させる。
+  const D = Math.min(Math.abs(look.drift ?? 0), 14);
+  const nOrg = 18 + D;                 // 18〜32
+  const nRung = 44 + D * 3;            // 44〜86
+  const nArc = 8 + Math.round(D / 2);  // 8〜15
+
+  // 膜は「線」ではなく厚みのある帯。模様はこの帯の上に、種類ごとのやり方で出す
   const BAND = 0.82;
-  const band = {
-    outer: ring(1), inner: ring(BAND), k: BAND,
-    rungs: look.pattern === 'stripes' ? 52 + (Math.abs(look.drift ?? 0) % 3) * 8 : 0,
-  };
+  const band = { outer: ring(1), inner: ring(BAND), k: BAND, pattern: membranePattern(look, id, nRung, D) };
   // 帯の内側にさらに境界が2本。向こう側が透ける
   const membranes = [BAND - 0.06, BAND - 0.16].map(k => ({ pts: ring(k), k }));
 
-  // 核。縞は球に巻きつく弧として持つ（水平の帯では球に見えない）
+  // 核。模様は球に巻きつく形で持つ（平らな帯では球に見えない）
   const nr = R * 0.34;
   const nucleus = {
     cx: C0 + wob(id, 31) * R * 0.14, cy: C0 + wob(id, 32) * R * 0.1 * ratio,
     rx: nr, ry: nr * (0.9 + Math.abs(wob(id, 33)) * 0.16),
-    arcs: [],
   };
-  if (look.pattern === 'stripes') {
-    const n = 9 + (Math.abs(look.drift ?? 0) % 3) * 2;
-    const tilt = 0.5 + wob(id, 34) * 0.12;         // 軸の傾き。縞の曲がり方に出る
-    for (let i = 0; i < n; i++) {
-      const th = (-1 + (2 * (i + 0.5)) / n) * 1.26; // 両極の手前まで
-      const u = Math.sin(th), cth = Math.cos(th);
-      nucleus.arcs.push({
-        y: nucleus.cy + nucleus.ry * u,
-        halfW: nucleus.rx * cth,
-        bulge: nucleus.ry * tilt * u * 1.5,         // 極に近いほど強く曲がる
-        w: nucleus.ry * 0.17 * cth + nucleus.ry * 0.04,
-      });
-    }
-  }
+  nucleus.pattern = nucleusPattern(look, id, nucleus, nArc);
 
   // 内部器官。共有の部品を、黄金角のらせんで決定論的に散らす（個体ごとの手置きはしない）
   const KINDS = ['mito', 'mito', 'vacuole', 'grain', 'coil'];
   const organelles = [];
-  const want = 20 + (Math.abs(look.drift ?? 0) % 3) * 3;
+  const want = nOrg;
   const GOLD = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0, placed = 0; i < want * 4 && placed < want; i++) {
     const t = (i + 0.5) / (want * 1.6);

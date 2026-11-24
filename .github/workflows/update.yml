@@ -28,7 +28,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - name: 取り込み、data/ の更新、テスト、main へ push
+      # 図鑑の焼きカード（pipeline/cards.mjs）と tests/browser.mjs が Chromium を使う
+      - run: npm install --no-save --no-audit --no-fund playwright@1.63.0
+      - run: npx playwright install --with-deps chromium
+      - name: 取り込み、data/ の更新、焼きカード、テスト、main へ push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

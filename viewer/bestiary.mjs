@@ -14,6 +14,8 @@ const BASE = new URL('../', import.meta.url);
 const get = async p => (await fetch(new URL(p, BASE))).json();
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const STAR_JA = { red: '赤色矮星', yellow: '黄色い恒星', blue: '青白い恒星' };
+// 焼きカードがある系統（単細胞）。pipeline/cards.mjs の bakeable と同じ条件。
+const bakedCard = e => e.cx === 2;
 
 // この号の1号あたりの時間を、読みやすい単位で。配分を入れる前の号は1号2,000万年。
 function myrFmt(W, issueNo) {
@@ -84,7 +86,17 @@ export function render(root, { W, snapshots, problems, ms }) {
   for (const e of list) {
     const card = el('article', 'card');
     const art = el('div', 'art');
-    art.innerHTML = creatureSVG(e, W, { size: 120 });
+    // 単細胞は GitHub Actions が焼いた画像を使う（スマホでは描けない密度にするため）。
+    // 画像が無い系統は、その場で SVG に戻す。
+    if (bakedCard(e)) {
+      const img = new Image(360, 360);
+      img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+      img.src = new URL(`data/cards/cell-${e.id}.webp`, BASE).href;
+      img.onerror = () => { art.textContent = ''; art.innerHTML = creatureSVG(e, W, { size: 120 }); };
+      art.append(img);
+    } else {
+      art.innerHTML = creatureSVG(e, W, { size: 120 });
+    }
     card.append(art);
     card.append(el('p', 'cx', `${CX_JA[e.cx] || '生き物'}・${e.sizeLabel}`));
     if (e.traits.length) card.append(el('p', 'look', e.traits.join('、')));

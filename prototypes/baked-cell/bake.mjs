@@ -8,7 +8,7 @@ import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync, readFileSync, statSync } from 'node:fs';
 import { runAll } from '../../engine/world.mjs';
 import { bestiary } from '../../engine/traits.mjs';
-import { cellSVG } from './cell-svg.mjs';
+import { cellSVG } from '../../viewer/cell.mjs';
 import { MAIN_SEED, MAIN_TIMING_FROM, PATHS } from '../../pipeline/config.mjs';
 
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };

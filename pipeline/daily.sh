@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# 毎日の更新: graph.json を取得し、台帳に新しい号を追記し、data/ を更新し、テストを通して main へ push する。
+# 毎日の更新: graph.json を取得し、台帳に新しい号を追記し、data/ を更新し、図鑑の焼きカードを
+# 焼き直し、テストを通して main へ push する。
 # どこかで失敗したら、そこで止まって何も push しない（Fail Closed。世界はその号の手前で止まり、壊れない）。
 # GitHub Actions（.github/workflows/update.yml）から動かす。手元でも同じように動く。
 # 使い方: bash pipeline/daily.sh [graph.json のパスか URL]
@@ -24,8 +25,10 @@ before=$(count)
 report node pipeline/ingest.mjs "$TMP/graph.json"
 after=$(count)
 report node pipeline/advance.mjs
+report node pipeline/cards.mjs
 npm test --silent
 node pipeline/advance.mjs --check
+node pipeline/cards.mjs --check
 
 if [ -z "$(git status --porcelain -- data)" ]; then note "data/ に変更なし。push しない"; exit 0; fi
 if [ "$after" -eq $((before + 1)) ]; then msg="台帳に #$after を取り込み、data/ を更新"
