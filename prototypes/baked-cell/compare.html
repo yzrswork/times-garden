@@ -32,7 +32,7 @@
 </head>
 <body>
 <main>
-  <h1>試作08 焼きカードの比べ</h1>
+  <h1>試作08 v2 焼きカードの比べ</h1>
   <p class="sub" id="sub">読み込み中…</p>
 
   <h2>いまの図鑑カード（SVG、スマホで描く） と 焼きカード（WebP、Actions で焼く）</h2>
@@ -66,8 +66,8 @@ const card = (inner, lab, meta) =>
 const svg = creatureSVG(e, W, { size: 360 });
 document.getElementById('pair').innerHTML =
   card(svg, 'いまの図鑑カード（SVG）', `${(new Blob([svg]).size / 1024).toFixed(1)}KB の SVG をスマホが描く`)
-  + card('<img src="./sample/cell-1713.webp" width="360" height="360" alt="焼きカード">', '焼きカード（WebP 360x360）',
-         '12.7KB の画像を置くだけ');
+  + card('<img src="./sample/cell-1713.webp" width="360" height="360" alt="焼きカード">', '焼きカード v2（WebP 360x360）',
+         '29.7KB の画像を置くだけ');
 
 document.getElementById('grid').innerHTML = Array.from({ length: 48 }, (_, i) =>
   `<article class="card"><img src="./sample/cell-1713.webp" width="360" height="360" loading="${i < 8 ? 'eager' : 'lazy'}" alt=""><p>真核の生き物・目に見えない</p></article>`).join('');

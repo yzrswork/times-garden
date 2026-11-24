@@ -1,15 +1,22 @@
-// 試作08: 単細胞を顕微鏡で覗いた高密度な静止画を SVG で描く。
+// 試作08 v2: 単細胞を顕微鏡で覗いた高密度な静止画を SVG で描く。
 //
 // 焼く（画像にする）前提なので、スマホでは重くて使えない手（ぼかし、ゆがみ、粒）を使ってよい。
 // 計算コストは GitHub Actions が1回だけ払い、スマホは画像を1枚置くだけになる。これが試作08の仮説。
 //
 // 形質の解釈はしない。本番の viewer/plan.mjs の cellPlan() が作る設計図を読むだけ。
+// 背景の礫と粒だけは場面の飾りなので、ここで系統の id から決定論的に散らす
+// （viewer/draw.mjs が場面の塵を描くのと同じ扱い）。
+//
+// v2 で足したもの: 膜を厚みのある帯にして縞を桟として走らせる、核の縞を球に巻きつく弧にする、
+// 内部器官を20個台にしてアクセント色で地と対比させる、背景に奥行きの層を置く、明度と彩度の幅を広げる。
+// 追わないもの: 濡れた質感と全面の鏡面ハイライト（art-bible 9）、紫×青緑の色そのもの（art-bible 4）。
 import { cellPlan, VB, C0 } from '../../viewer/plan.mjs';
 import { hsl, hsla, palette, LIGHT } from '../../viewer/palette.mjs';
 
 const n2 = v => Math.round(v * 100) / 100;
 const P = p => `${n2(p[0])} ${n2(p[1])}`;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const wob = (id, i) => { const x = Math.sin((id * 12.9898 + i * 78.233)) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
 
 // 点を滑らかにつないだ閉じた輪郭（図鑑カードと同じつなぎ方）
 function loopPath(pts) {
@@ -22,119 +29,149 @@ function loopPath(pts) {
   }
   return d + 'Z';
 }
+// 輪郭の上を角度 a で進んだ点（帯の桟を引くのに使う）
+const onRing = (plan, k, a) => [
+  C0 + Math.cos(a) * plan.R * k * (1 + wob(plan.id, Math.round(a * 1.75)) * 0.12),
+  C0 + Math.sin(a) * plan.R * k * (1 + wob(plan.id, Math.round(a * 1.75)) * 0.12) * plan.ratio,
+];
 
-// 内部器官。共有の部品3種を組み合わせるだけ
-function organelle(o, c, i) {
-  const g = `translate(${n2(o.cx)} ${n2(o.cy)})`;
+/* ---------- 内部器官（共有の部品。個体ごとの手置きはしない） ---------- */
+
+function organelle(o, c, acc, i) {
+  const g = `translate(${n2(o.cx)} ${n2(o.cy)}) rotate(${n2(o.rot)})`;
+  if (o.kind === 'mito') { // ミトコンドリア: 内部にひだ
+    const n = 5;
+    const cr = [];
+    for (let k = 0; k < n; k++) {
+      const x = -o.rx * 0.66 + (k * o.rx * 1.32) / (n - 1);
+      cr.push(`<path d="M${n2(x)} ${n2(-o.ry * 0.62)}q${n2(o.rx * 0.16)} ${n2(o.ry * 0.6)} 0 ${n2(o.ry * 1.24)}" fill="none" stroke="${acc(0.75, -18)}" stroke-width=".55"/>`);
+    }
+    return `<g transform="${g}"><rect x="${n2(-o.rx)}" y="${n2(-o.ry)}" width="${n2(o.rx * 2)}" height="${n2(o.ry * 2)}" rx="${n2(o.ry)}" fill="${acc(0.3, 8)}" stroke="${acc(0.85, -6)}" stroke-width=".8"/>${cr.join('')}</g>`;
+  }
   if (o.kind === 'vacuole') // 液胞: 中が抜けた丸
-    return `<g transform="${g}"><ellipse rx="${n2(o.rx)}" ry="${n2(o.ry)}" fill="${hsla(c, 0.3, 16)}" stroke="${hsla(c, 0.6, -14)}" stroke-width=".7"/>`
-      + `<ellipse cx="${n2(-o.rx * 0.3)}" cy="${n2(-o.ry * 0.3)}" rx="${n2(o.rx * 0.3)}" ry="${n2(o.ry * 0.28)}" fill="#fff" opacity=".2"/></g>`;
+    return `<g transform="${g}"><ellipse rx="${n2(o.rx)}" ry="${n2(o.ry)}" fill="${hsla(c, 0.22, 26)}" stroke="${acc(0.6, 4)}" stroke-width=".7"/>`
+      + `<ellipse cx="${n2(-o.rx * 0.32)}" cy="${n2(-o.ry * 0.32)}" rx="${n2(o.rx * 0.3)}" ry="${n2(o.ry * 0.28)}" fill="#fff" opacity=".3"/></g>`;
   if (o.kind === 'grain') { // 顆粒: 小さな粒の群れ
     const out = [];
     for (let k = 0; k < 7; k++) {
       const a = (Math.PI * 2 * k) / 7 + i;
-      out.push(`<circle cx="${n2(Math.cos(a) * o.rx * 0.7)}" cy="${n2(Math.sin(a) * o.ry * 0.7)}" r="${n2(o.rx * 0.26)}" fill="${hsla(c, 0.75, -20, 10)}"/>`);
+      out.push(`<circle cx="${n2(Math.cos(a) * o.rx * 0.72)}" cy="${n2(Math.sin(a) * o.ry * 0.72)}" r="${n2(o.rx * 0.3)}" fill="${acc(0.9, -12)}"/>`);
     }
     return `<g transform="${g}">${out.join('')}</g>`;
   }
-  // コイル: 巻いた器官
+  // コイル: 折りたたまれたリボン
   let d = `M${n2(-o.rx)} 0`;
-  for (let k = 1; k <= 14; k++) {
-    const t = k / 14, a = t * Math.PI * 3.2, r = o.rx * (1 - t * 0.8);
+  for (let k = 1; k <= 16; k++) {
+    const t = k / 16, a = t * Math.PI * 3.4, r = o.rx * (1 - t * 0.78);
     d += `L${n2(Math.cos(a) * r)} ${n2(Math.sin(a) * r * (o.ry / o.rx))}`;
   }
-  return `<g transform="${g}"><path d="${d}" fill="none" stroke="${hsla(c, 0.7, -8, 8)}" stroke-width="${n2(o.rx * 0.3)}" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+  return `<g transform="${g}"><path d="${d}" fill="none" stroke="${acc(0.85, 2)}" stroke-width="${n2(o.rx * 0.34)}" stroke-linecap="round" stroke-linejoin="round"/></g>`;
 }
 
 // entry は engine/traits.mjs の bestiary() の1件。world は { star, gravity }。
 export function cellSVG(entry, world, { size = 360, fill = 0.8 } = {}) {
   const plan = cellPlan(entry, world, { fill });
-  const { id, color: c, R, ratio } = plan;
+  const { id, color: c, R, ratio, band, nucleus: nuc } = plan;
   const p = palette(world.star);
-  const outer = loopPath(plan.membranes[0].pts);
   const glow = plan.pattern === 'glow';
+  // アクセント色。色相は恒星のパレットが持つ body の色相の範囲に収め（art-bible 4）、
+  // 対比は彩度と明度で作る。色相そのものを動かすと恒星の決まりを外れる。
+  const hues = p.body.map(b => b[0]);
+  const accH = Math.min(...hues) + (Math.max(...hues) - Math.min(...hues)) * 0.1;
+  const acc = (a, dl = 0) => hsla({ h: accH, s: Math.min(100, c.s + 42), l: Math.min(76, c.l + 18) }, a, dl);
+
+  const outer = loopPath(band.outer), inner = loopPath(band.inner);
+
+  // 膜の帯を横切る桟（しま）。帯の内側から外側へ引く
+  const rungs = [];
+  for (let i = 0; i < band.rungs; i++) {
+    const a = (Math.PI * 2 * i) / band.rungs;
+    const i0 = onRing(plan, band.k * 0.97, a), o0 = onRing(plan, 1.03, a);
+    rungs.push(`<line x1="${P(i0)}" y1="" x2="" y2=""/>`.replace(/ x1="[^"]*" y1="" x2="" y2=""/,
+      ` x1="${n2(i0[0])}" y1="${n2(i0[1])}" x2="${n2(o0[0])}" y2="${n2(o0[1])}"`)
+      .replace('/>', ` stroke="${i % 2 ? hsla(c, 0.72, -26, 10) : hsla(c, 0.5, 30)}" stroke-width="${n2(R * 0.05)}" stroke-linecap="butt"/>`));
+  }
+
+  // 核の縞: 球に巻きつく弧
+  const arcs = nuc.arcs.map(s =>
+    `<path d="M${n2(nuc.cx - s.halfW)} ${n2(s.y)}Q${n2(nuc.cx)} ${n2(s.y + s.bulge)} ${n2(nuc.cx + s.halfW)} ${n2(s.y)}"`
+    + ` fill="none" stroke="${hsla(c, 0.6, -30, 14)}" stroke-width="${n2(s.w)}" stroke-linecap="round"/>`).join('');
+
+  // 背景の奥行き: ぼけた礫（前景の粒とは別の層）
+  const grit = [];
+  for (let i = 0; i < 26; i++) {
+    const x = ((wob(id, i + 200) + 1) / 2) * VB, y = ((wob(id, i + 230) + 1) / 2) * VB;
+    const r = 2 + Math.abs(wob(id, i + 260)) * 6;
+    grit.push(`<ellipse cx="${n2(x)}" cy="${n2(y)}" rx="${n2(r)}" ry="${n2(r * 0.78)}" fill="${hsla({ ...c, s: c.s - 10 }, 0.5, -34 + Math.abs(wob(id, i + 290)) * 16, 0, -14)}"/>`);
+  }
+  const dust = [];
+  for (let i = 0; i < 11; i++) {
+    const a = (Math.PI * 2 * i) / 11 + id * 0.3, rr = VB * (0.3 + ((i * 7) % 5) * 0.07);
+    dust.push(`<circle cx="${n2(C0 + Math.cos(a) * rr)}" cy="${n2(C0 + Math.sin(a) * rr)}" r="${n2(1.4 + (i % 4) * 1.3)}" fill="${hsla(c, 0.22, 34)}"/>`);
+  }
 
   const defs = `<defs>`
-    // 顕微鏡の視野: 中央が明るく、周りへ落ちる
-    + `<radialGradient id="field${id}"><stop offset="0" stop-color="${hsla({ ...c, l: 58 }, 0.5, 0, -14)}"/>`
-    + `<stop offset=".55" stop-color="${p.panel}"/><stop offset="1" stop-color="${p.bg}"/></radialGradient>`
-    // 細胞質: 光の向きに厚みが出る
-    + `<radialGradient id="cyto${id}" cx="${n2(50 + LIGHT.x * 34)}%" cy="${n2(50 + LIGHT.y * 34)}%" r="78%">`
-    + `<stop offset="0" stop-color="${hsl(c, 26, -8, 8)}"/><stop offset=".5" stop-color="${hsl(c, 4)}"/>`
-    + `<stop offset="1" stop-color="${hsl(c, -22, 6, -8)}"/></radialGradient>`
-    + `<radialGradient id="nuc${id}" cx="36%" cy="30%" r="76%">`
-    + `<stop offset="0" stop-color="${hsl(c, 18, 6, 14)}"/><stop offset=".6" stop-color="${hsl(c, -6, 10, 10)}"/>`
-    + `<stop offset="1" stop-color="${hsl(c, -28, 14, 4)}"/></radialGradient>`
-    // 膜の縁: 光が回り込んで光る（顕微鏡の屈折）
+    // 顕微鏡の視野。明度の幅を広げるため、外周をかなり落とす
+    + `<radialGradient id="field${id}"><stop offset="0" stop-color="${hsla({ ...c, l: 50 }, 0.55, 0, -10)}"/>`
+    + `<stop offset=".5" stop-color="${hsla({ ...c, l: 20 }, 0.9)}"/><stop offset="1" stop-color="${p.ink}"/></radialGradient>`
+    // 細胞質
+    + `<radialGradient id="cyto${id}" cx="${n2(50 + LIGHT.x * 34)}%" cy="${n2(50 + LIGHT.y * 34)}%" r="80%">`
+    + `<stop offset="0" stop-color="${hsl(c, 30, -6, 8)}"/><stop offset=".48" stop-color="${hsl(c, 0)}"/>`
+    + `<stop offset="1" stop-color="${hsl(c, -34, 10, -8)}"/></radialGradient>`
+    // 膜の帯
+    + `<radialGradient id="bandg${id}" cx="${n2(50 + LIGHT.x * 30)}%" cy="${n2(50 + LIGHT.y * 30)}%" r="84%">`
+    + `<stop offset="0" stop-color="${hsl(c, 34, -8, 6)}"/><stop offset=".6" stop-color="${hsl(c, 10)}"/>`
+    + `<stop offset="1" stop-color="${hsl(c, -28, 8, -6)}"/></radialGradient>`
+    + `<radialGradient id="nucg${id}" cx="34%" cy="28%" r="78%">`
+    + `<stop offset="0" stop-color="${hsl(c, 26, 8, 12)}"/><stop offset=".58" stop-color="${hsl(c, -4, 12, 8)}"/>`
+    + `<stop offset="1" stop-color="${hsl(c, -36, 16, 2)}"/></radialGradient>`
     + `<linearGradient id="rim${id}" x1="12%" y1="2%" x2="86%" y2="98%">`
-    + `<stop offset="0" stop-color="${hsl(c, 38, -6, 6)}"/><stop offset=".45" stop-color="${hsl(c, -4)}"/>`
-    + `<stop offset="1" stop-color="${hsl(c, -30, 4, -6)}"/></linearGradient>`
-    // 焼く前提なので重い手を使う: 膜の表面の粒と、わずかなゆがみ
+    + `<stop offset="0" stop-color="${hsl(c, 42, -6, 6)}"/><stop offset=".45" stop-color="${hsl(c, -2)}"/>`
+    + `<stop offset="1" stop-color="${hsl(c, -36, 4, -6)}"/></linearGradient>`
+    // 焼く前提の重い手
     + `<filter id="grain${id}" x="-20%" y="-20%" width="140%" height="140%">`
     + `<feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="${id % 100}" result="n"/>`
-    + `<feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" xChannelSelector="R" yChannelSelector="G"/></filter>`
-    + `<filter id="soft${id}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.4"/></filter>`
-    + `<filter id="bokeh${id}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.8"/></filter>`
+    + `<feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G"/></filter>`
+    + `<filter id="soft${id}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2"/></filter>`
+    + `<filter id="far${id}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3.4"/></filter>`
+    + `<filter id="near${id}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="1.4"/></filter>`
     + (glow ? `<filter id="bloom${id}" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4"/></filter>` : '')
-    + `<radialGradient id="vig${id}"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".62"/></radialGradient>`
-    + `<clipPath id="cell${id}"><path d="${outer}"/></clipPath>`
-    + `<clipPath id="nucc${id}"><ellipse cx="${n2(plan.nucleus.cx)}" cy="${n2(plan.nucleus.cy)}" rx="${n2(plan.nucleus.rx)}" ry="${n2(plan.nucleus.ry)}"/></clipPath>`
+    + `<radialGradient id="vig${id}"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".72"/></radialGradient>`
+    + `<clipPath id="cell${id}"><path d="${inner}"/></clipPath>`
+    + `<clipPath id="bandc${id}"><path d="${outer} ${inner}" clip-rule="evenodd"/></clipPath>`
+    + `<clipPath id="nucc${id}"><ellipse cx="${n2(nuc.cx)}" cy="${n2(nuc.cy)}" rx="${n2(nuc.rx)}" ry="${n2(nuc.ry)}"/></clipPath>`
     + `</defs>`;
-
-  // ピントの外のもの（顕微鏡らしさ）
-  const bokeh = [];
-  for (let i = 0; i < 9; i++) {
-    const a = (Math.PI * 2 * i) / 9 + id * 0.3, r = VB * (0.3 + ((i * 7) % 5) * 0.06);
-    bokeh.push(`<circle cx="${n2(C0 + Math.cos(a) * r)}" cy="${n2(C0 + Math.sin(a) * r)}" r="${n2(1.6 + (i % 4) * 1.1)}" fill="${hsla({ ...c, l: 70 }, 0.16)}" filter="url(#bokeh${id})"/>`);
-  }
-
-  // 繊毛: 縁に沿って並ぶ細い毛
-  const cilia = plan.cilia.map((s, i) =>
-    `<path d="M${P(s.base)}Q${n2((s.base[0] + s.tip[0]) / 2 + Math.sin(i) * 1.2)} ${n2((s.base[1] + s.tip[1]) / 2)} ${P(s.tip)}"`
-    + ` fill="none" stroke="${hsla(c, 0.62, 14)}" stroke-width=".55" stroke-linecap="round"/>`).join('');
-
-  // 偽足: 外へ張り出す（いまの決まりでは単細胞に asym は出ないので、ふつうは0本）
-  const pods = plan.pseudopods.map(s =>
-    `<path d="M${P(s.base)}Q${P(s.ctrl)} ${P(s.tip)}" fill="none" stroke="url(#cyto${id})" stroke-width="${n2(s.half * 2)}" stroke-linecap="round" opacity=".92"/>`).join('');
-
-  // しまは塗りではなく構造として、膜と核をまたぐ帯で出す
-  const stripes = plan.stripes.map(s =>
-    `<rect x="0" y="${n2(s.y - s.w / 2)}" width="${VB}" height="${n2(s.w)}" fill="${hsla(c, 0.3, -24, 10, 12)}"/>`
-    + `<rect x="0" y="${n2(s.y - s.w / 2)}" width="${VB}" height="${n2(s.w * 0.3)}" fill="${hsla(c, 0.22, 24)}"/>`).join('');
-
-  const nuc = plan.nucleus;
-  const nucBands = [];
-  for (let i = 0; i < nuc.bands; i++) {
-    const y = nuc.cy + ((i + 0.5) / nuc.bands - 0.5) * 2 * nuc.ry;
-    nucBands.push(`<rect x="${n2(nuc.cx - nuc.rx * 1.1)}" y="${n2(y - nuc.ry * 0.08)}" width="${n2(nuc.rx * 2.2)}" height="${n2(nuc.ry * 0.16)}" fill="${hsla(c, 0.38, -26, 12, 10)}"/>`);
-    nucBands.push(`<rect x="${n2(nuc.cx - nuc.rx * 1.1)}" y="${n2(y - nuc.ry * 0.08)}" width="${n2(nuc.rx * 2.2)}" height="${n2(nuc.ry * 0.05)}" fill="${hsla(c, 0.28, 22)}"/>`);
-  }
 
   return `<svg viewBox="0 0 ${VB} ${VB}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(entry.text || '生き物')}">`
     + defs
     + `<rect width="${VB}" height="${VB}" fill="url(#field${id})"/>`
-    + bokeh.join('')
+    + `<g filter="url(#far${id})">${grit.join('')}</g>`      // 奥の礫
     + (glow ? `<ellipse cx="${C0}" cy="${C0}" rx="${n2(R * 1.3)}" ry="${n2(R * 1.3 * ratio)}" fill="${hsla(c, 0.5, 26)}" filter="url(#bloom${id})"/>` : '')
-    + pods
-    + cilia
-    // 外膜（表面に粒とゆがみ）
+    + plan.pseudopods.map(s => `<path d="M${P(s.base)}Q${P(s.ctrl)} ${P(s.tip)}" fill="none" stroke="url(#cyto${id})" stroke-width="${n2(s.half * 2)}" stroke-linecap="round" opacity=".92"/>`).join('')
+    // 繊毛
+    + plan.cilia.map((s, i) =>
+        `<path d="M${P(s.base)}Q${n2((s.base[0] + s.tip[0]) / 2 + Math.sin(i) * 1.1)} ${n2((s.base[1] + s.tip[1]) / 2)} ${P(s.tip)}"`
+        + ` fill="none" stroke="${hsla(c, 0.5 + Math.abs(wob(id, i + 140)) * 0.4, 20 + Math.abs(wob(id, i + 150)) * 22)}" stroke-width="${n2(s.w)}" stroke-linecap="round"/>`).join('')
+    // 細胞質（内側）
+    + `<path d="${inner}" fill="url(#cyto${id})"/>`
+    // 膜の帯と、帯を横切る桟
     + `<g filter="url(#grain${id})">`
-    + `<path d="${outer}" fill="url(#cyto${id})" fill-opacity=".92" stroke="url(#rim${id})" stroke-width="1.6"/>`
+    + `<path d="${outer} ${inner}" fill-rule="evenodd" fill="url(#bandg${id})" opacity=".96"/>`
+    + `<g clip-path="url(#bandc${id})">${rungs.join('')}</g>`
+    + `<path d="${outer}" fill="none" stroke="url(#rim${id})" stroke-width="1.4"/>`
+    + `<path d="${inner}" fill="none" stroke="${hsla(c, 0.6, -24)}" stroke-width="1"/>`
     + `</g>`
-    // 屈折のにじみ
-    + `<path d="${outer}" fill="none" stroke="${hsla(c, 0.5, 34)}" stroke-width="2.2" filter="url(#soft${id})"/>`
+    + `<path d="${outer}" fill="none" stroke="${hsla(c, 0.45, 40)}" stroke-width="2" filter="url(#soft${id})"/>`
+    // 内側
     + `<g clip-path="url(#cell${id})">`
-    + stripes
-    // 内側の膜2層。内側が透けて見える
-    + plan.membranes.slice(1).map((m, i) =>
-        `<path d="${loopPath(m.pts)}" fill="${hsla(c, 0.16 + i * 0.08, 10 - i * 8)}" stroke="${hsla(c, 0.4, -10)}" stroke-width=".8"/>`).join('')
-    + plan.organelles.map((o, i) => organelle(o, c, i)).join('')
-    // 核。帯が核の上も走る
-    + `<ellipse cx="${n2(nuc.cx)}" cy="${n2(nuc.cy)}" rx="${n2(nuc.rx)}" ry="${n2(nuc.ry)}" fill="url(#nuc${id})" stroke="${hsla(c, 0.7, -22)}" stroke-width="1.1"/>`
-    + `<g clip-path="url(#nucc${id})">${nucBands.join('')}</g>`
-    + `<ellipse cx="${n2(nuc.cx - nuc.rx * 0.22)}" cy="${n2(nuc.cy - nuc.ry * 0.2)}" rx="${n2(nuc.rx * 0.26)}" ry="${n2(nuc.ry * 0.24)}" fill="${hsla(c, 0.55, -30, 14)}"/>`
-    + `<ellipse cx="${n2(nuc.cx - nuc.rx * 0.34)}" cy="${n2(nuc.cy - nuc.ry * 0.34)}" rx="${n2(nuc.rx * 0.3)}" ry="${n2(nuc.ry * 0.22)}" fill="#fff" opacity=".13"/>`
+    + plan.membranes.map((m, i) =>
+        `<path d="${loopPath(m.pts)}" fill="${hsla(c, 0.12 + i * 0.07, 14 - i * 10)}" stroke="${hsla(c, 0.35, -14)}" stroke-width=".7"/>`).join('')
+    + plan.organelles.map((o, i) => organelle(o, c, acc, i)).join('')
+    + `<ellipse cx="${n2(nuc.cx)}" cy="${n2(nuc.cy)}" rx="${n2(nuc.rx)}" ry="${n2(nuc.ry)}" fill="url(#nucg${id})" stroke="${hsla(c, 0.8, -26)}" stroke-width="1"/>`
+    + `<g clip-path="url(#nucc${id})">${arcs}</g>`
+    + `<ellipse cx="${n2(nuc.cx - nuc.rx * 0.3)}" cy="${n2(nuc.cy - nuc.ry * 0.3)}" rx="${n2(nuc.rx * 0.3)}" ry="${n2(nuc.ry * 0.24)}" fill="#fff" opacity=".16"/>`
     + `</g>`
+    + `<g filter="url(#near${id})">${dust.join('')}</g>`      // 手前の粒
     + `<rect width="${VB}" height="${VB}" fill="url(#vig${id})"/>`
     + '</svg>';
 }
