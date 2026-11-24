@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Times Garden 試作07 生き物の視点</title>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js" } }
+</script>
+<style>
+  :root { --bg:#0a0f16; --panel:#121a24; --text:#e3edf5; --dim:#86979f; --accent:#8fd3f0; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text);
+    font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif; font-feature-settings:"palt"; overscroll-behavior:none; }
+  #view { position:fixed; inset:0; touch-action:none; }
+  #view canvas { display:block; width:100%; height:100%; }
+  .ui { position:fixed; left:0; right:0; pointer-events:none; }
+  .top { top:0; padding:14px 16px; background:linear-gradient(#000a,transparent); }
+  .bot { bottom:0; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); background:linear-gradient(transparent,#000c); }
+  h1 { margin:0; font-size:.78rem; letter-spacing:.14em; color:var(--dim); font-weight:600; }
+  .name { margin:2px 0 0; font-size:.98rem; }
+  .look { margin:2px 0 0; font-size:.74rem; color:var(--dim); }
+  .modes { display:flex; gap:8px; pointer-events:auto; flex-wrap:wrap; }
+  button { font:inherit; font-size:.8rem; color:var(--text); background:var(--panel);
+    border:1px solid rgba(255,255,255,.14); border-radius:999px; padding:9px 16px; cursor:pointer; }
+  button[aria-pressed="true"] { background:var(--accent); color:#06121a; border-color:transparent; font-weight:600; }
+  .hint { margin:8px 0 0; font-size:.7rem; color:var(--dim); }
+  .card { position:fixed; right:12px; top:56px; width:124px; border-radius:10px; overflow:hidden;
+    border:1px solid rgba(255,255,255,.12); background:var(--panel); pointer-events:none; }
+  .card svg { display:block; width:100%; height:auto; }
+  .card p { margin:0; padding:5px 7px; font-size:.6rem; color:var(--dim); line-height:1.4; }
+  #err { position:fixed; inset:0; display:none; place-items:center; padding:24px; text-align:center;
+    font-size:.86rem; color:#e0a26a; background:var(--bg); }
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="ui top"><h1>TIMES GARDEN · 試作 07 · 生き物の視点</h1><p class="name" id="name">読み込み中…</p><p class="look" id="look"></p></div>
+<div class="card" id="card"></div>
+<div class="ui bot">
+  <div class="modes">
+    <button id="m-lens" aria-pressed="true">レンズの目</button>
+    <button id="m-none" aria-pressed="false">目のない種</button>
+    <button id="m-orbit" aria-pressed="false">姿を見る</button>
+  </div>
+  <p class="hint">ドラッグで見回す。右上のカードは同じ系統の図鑑の絵。</p>
+</div>
+<div id="err"></div>
+<script type="module">
+import { init } from './view.mjs';
+init().catch(e => {
+  console.error(e);
+  const el = document.getElementById('err');
+  el.style.display = 'grid';
+  el.textContent = '読み込みに失敗しました: ' + (e?.message ?? e);
+});
+</script>
+</body>
+</html>
