@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>試作09 キャラ化の比べ</title>
+<style>
+  :root { --bg:#0a0f16; --panel:#121a24; --text:#e3edf5; --dim:#86979f; --accent:#8fd3f0; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:16px 12px 56px; background:var(--bg); color:var(--text);
+    font-family:"Hiragino Sans","Noto Sans JP",system-ui,sans-serif; line-height:1.7; font-feature-settings:"palt"; }
+  main { max-width: 390px; margin: 0 auto; }
+  h1 { font-size:1rem; letter-spacing:.12em; margin:0 0 4px; }
+  h2 { font-size:.82rem; letter-spacing:.08em; color:var(--dim); margin:28px 0 8px;
+    padding-bottom:5px; border-bottom:1px solid rgba(255,255,255,.08); }
+  h3 { font-size:.74rem; color:var(--dim); margin:14px 0 6px; font-weight:600; letter-spacing:.06em; }
+  p { margin:0 0 8px; font-size:.78rem; }
+  .sub { color:var(--dim); font-size:.72rem; }
+  .bar { position:sticky; top:0; z-index:5; display:flex; gap:8px; padding:8px 0; background:var(--bg); }
+  button { flex:1; background:var(--panel); color:var(--text); border:1px solid rgba(255,255,255,.12);
+    border-radius:999px; padding:7px 10px; font:inherit; font-size:.74rem; cursor:pointer; }
+  button[aria-pressed="true"] { background:var(--accent); color:#06131b; border-color:transparent; font-weight:600; }
+  .pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .pair figure { margin:0; }
+  .pair figcaption { font-size:.68rem; color:var(--dim); margin-top:3px; }
+  .art { background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:10px; overflow:hidden; line-height:0; }
+  .art svg, .art img { width:100%; height:auto; display:block; }
+  .list { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:8px; }
+  .list .card { background:var(--panel); border:1px solid rgba(255,255,255,.06); border-radius:10px; overflow:hidden; }
+  .list .card p { margin:0; padding:5px 7px 7px; font-size:.64rem; color:var(--dim); }
+  .list svg { width:100%; height:auto; display:block; }
+  table { width:100%; border-collapse:collapse; font-size:.68rem; }
+  th, td { text-align:left; vertical-align:top; padding:4px 6px 4px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+  th { color:var(--dim); font-weight:600; white-space:nowrap; }
+  td.v { font-family:ui-monospace,Menlo,monospace; color:var(--accent); white-space:nowrap; }
+  .scene { margin-top:10px; }
+  .scene svg { width:100%; height:auto; display:block; border-radius:10px; }
+  .rig td, .rig th { font-size:.64rem; }
+  .err { color:#e0a26a; font-size:.74rem; }
+</style>
+</head>
+<body>
+<main id="app"><p class="sub">読み込み中…</p></main>
+<script type="module">
+import { charSVG } from './char.mjs';
+import { rigFor, rigTable, RIGS } from './rig.mjs';
+import { cliffTownSVG } from './scene.mjs';
+import { bodyPlan, cellPlan, arms } from '../../viewer/plan.mjs';
+import { creatureSVG } from '../../viewer/draw.mjs';
+import { cellSVG } from '../../viewer/cell.mjs';
+import { townSVG } from '../../viewer/town.mjs';
+
+const app = document.getElementById('app');
+const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
+let silhouette = false;
+
+const DATA = await (await fetch('./subjects.json')).json();
+
+// 形質 → 絵のどこに出るか（plan.mjs の決定規則と rig の対応表）
+function traitRows(s) {
+  const L = s.entry.look, plan = s.render === 'cell' ? cellPlan(s.entry, s.world) : bodyPlan(s.entry, s.world);
+  const rig = rigFor({ ...plan, headIndex: 0 }, s.entry);
+  const rows = [
+    ['体の型 form', L.form, s.render === 'cell' ? '細胞のゆがみ方（図鑑カードと同じ）' : `${rig.ja}の骨組み。rig の比率とポーズもこれで決まる`],
+    ['色味のずれ drift', L.drift, s.render === 'cell' ? `内部器官 ${plan.organelles.length}個、膜の桟 ${plan.band.pattern.items.length}本、核の縞 ${plan.nucleus.pattern.items.length}本` : (L.form === 'radial' ? `放射腕 ${arms(L, s.entry.id).length}本（3 + |drift| mod 6）` : '体の色味のずれ')],
+    ['関節の向き joint', L.joint, L.form === 'radial' ? `腕の先の形（${arms(L, s.entry.id)[0].tip}）` : '付属器の曲がり方'],
+    ['左右の非対称 asym', L.asym, L.asym ? '腕の長さと間隔が交互にずれる＋構えが崩れる' : '対称のまま'],
+    ['目 eyeKind / eyeN', `${L.eyeKind} / ${L.eyeN}`, L.eyeKind === 'none' ? '目なし。焦点は核（形質にない器官は足さない）' : `焦点。rig で x${RIGS[L.form]?.deform.eye ?? 2} に拡大（数と位置は plan のまま）`],
+    ['体の覆い cover', L.cover, L.cover === 'bare' ? '（なし）' : L.cover === 'scale' ? 'うろこの筋' : L.cover === 'fur' ? '縁の毛' : '殻の板'],
+    ['動く部分 limb / limbN', `${L.limb} / ${L.limbN}`, L.limb === 'none' ? '（なし）' : L.limb === 'wing' ? `翼 ${L.limbN}本。rig で ${RIGS.seg.deform.lift}度持ち上げてシルエットに出す` : `${L.limbN}本。前後で交互に振る`],
+    ['模様 pattern', L.pattern, L.pattern === 'plain' ? '無地（無地であることが形質）' : L.pattern === 'stripes' ? '膜の桟と核に巻きつく縞' : L.pattern],
+    ['大きさの段階 sizeStep', s.entry.sizeStep, '絵の中の大きさ（枠からはみ出すときだけ縮める）'],
+    ['惑星の重力', s.world.gravity, '体の平たさ（重いほど低く平たい）'],
+    ['恒星', s.world.star, '画面全体の色温度（パレットの外の色は使わない）'],
+  ];
+  return { rows, rig };
+}
+
+function cardFor(s, size, mode) {
+  if (mode === 'old') return s.render === 'cell' ? cellSVG(s.entry, s.world, { size }) : creatureSVG(s.entry, s.world, { size });
+  return charSVG(s.entry, s.world, { render: s.render, size, mode: silhouette ? 'silhouette' : 'full' });
+}
+
+function render() {
+  app.textContent = '';
+  app.append(el('h1', null, '試作09 キャラ化縦切り'));
+  app.append(el('p', 'sub', '旧（いまの本番）と新（キャラ層）を同じ寸法で比べる。スマホ幅390px。'
+    + '対象3系統の形質はすべて公開データの実値（subjects.json）。'));
+
+  const bar = el('div', 'bar');
+  const bSil = el('button', null, silhouette ? 'シルエット表示 中' : 'シルエットだけ表示');
+  bSil.setAttribute('aria-pressed', String(silhouette));
+  bSil.onclick = () => { silhouette = !silhouette; render(); window.scrollTo({ top: 0 }); };
+  bar.append(bSil);
+  app.append(bar);
+
+  for (const s of DATA.subjects) {
+    app.append(el('h2', null, `${s.label}（id ${s.entry.id}）`));
+    app.append(el('p', 'sub', `${s.from}・生まれた号 #${s.entry.born}・${s.entry.text}`));
+    app.append(el('p', 'sub', `この試作で見る理由: ${s.why}`));
+
+    app.append(el('h3', null, '詳細サイズ（360px相当）'));
+    const pair = el('div', 'pair');
+    for (const [mode, lab] of [['old', '旧（いまの本番）'], ['new', silhouette ? '新（シルエット）' : '新（キャラ層）']]) {
+      const fig = el('figure');
+      const art = el('div', 'art');
+      art.innerHTML = cardFor(s, 360, mode);
+      fig.append(art, el('figcaption', null, lab));
+      pair.append(fig);
+    }
+    app.append(pair);
+
+    app.append(el('h3', null, '一覧サイズ（図鑑の実寸・120px）'));
+    const list = el('div', 'list');
+    for (const [mode, lab] of [['old', '旧'], ['new', '新'], ['old', '旧'], ['new', '新']]) {
+      const card = el('div', 'card');
+      card.innerHTML = cardFor(s, 120, mode);
+      card.append(el('p', null, `${lab}・${s.entry.text.split('、').slice(0, 2).join('、')}`));
+      list.append(card);
+    }
+    app.append(list);
+
+    app.append(el('h3', null, '形質 → 絵の要素'));
+    const { rows, rig } = traitRows(s);
+    const tb = el('table');
+    for (const [k, v, how] of rows) {
+      const tr = el('tr');
+      tr.append(el('th', null, k));
+      tr.append(el('td', 'v', String(v)));
+      tr.append(el('td', null, how));
+      tb.append(tr);
+    }
+    app.append(tb);
+    app.append(el('p', 'sub', `rig: ${rig.ja}／${rig.pose_ja}／焦点 ${rig.focus.kind}／陰影 ${rig.shade.steps}段／${rig.ground.kind === 'contact' ? '接地影' : '浮遊影'}`));
+  }
+
+  app.append(el('h2', null, '文明シーン（#314・崖の住まい・町）'));
+  app.append(el('p', 'sub', '上がいまの段階4のカード（viewer/town.mjs）。下が試作09。ビル群をやめ、'
+    + '崖に掘った低く横に広い入口、翼で降りる止まり場、通り道の擦り跡、火の明かりにした。主役は生き物。'));
+  const seg = DATA.subjects.find(x => x.key === 'seg');
+  const s1 = el('div', 'scene'); s1.innerHTML = townSVG({ id: 314, stage: 'town', dwelling: 'cliff' }, seg.world, { size: 366 });
+  const s2 = el('div', 'scene'); s2.innerHTML = cliffTownSVG(seg.entry, seg.world, { stage: 'town', size: 366 });
+  app.append(s1, s2);
+
+  app.append(el('h2', null, 'rig の表（体の型 × 比率・焦点・ポーズ・陰影・接地影）'));
+  const rt = el('table', 'rig');
+  const head = el('tr');
+  for (const h of ['型', '比率', '焦点', 'ポーズ', '陰影', '接地影']) head.append(el('th', null, h));
+  rt.append(head);
+  for (const r of rigTable()) {
+    const tr = el('tr');
+    tr.append(el('th', null, r.ja));
+    for (const k of ['比率', '焦点', 'ポーズ', '陰影', '接地影']) tr.append(el('td', null, r[k]));
+    rt.append(tr);
+  }
+  app.append(rt);
+  app.append(el('p', 'sub', '形質 → 形の設計図の決定（viewer/plan.mjs）は変えていない。rig が決めるのは見せ方だけ。'));
+}
+
+try { render(); } catch (e) { app.innerHTML = ''; app.append(el('p', 'err', '描けなかった: ' + (e?.message ?? e))); console.error(e); }
+</script>
+</body>
+</html>

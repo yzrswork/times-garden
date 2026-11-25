@@ -1,0 +1,163 @@
+{
+ "madeBy": "node prototypes/character/subjects.mjs --write",
+ "note": "値は engine/traits.mjs の bestiary() の実値。作り直すと同じ値になる（決定論）。",
+ "mainSeed": "times-garden-v1",
+ "mainIssues": 274,
+ "synth": {
+  "seed": "shot-15",
+  "at": 1286
+ },
+ "subjects": [
+  {
+   "key": "cell",
+   "label": "単細胞（基準体）",
+   "from": "主役の惑星 #274",
+   "why": "試作08 v2 の様式（焼きカード）との差分を見る基準体",
+   "render": "cell",
+   "world": {
+    "star": "blue",
+    "gravity": 1.48,
+    "air": 1.58,
+    "T": 30.1
+   },
+   "entry": {
+    "id": 1713,
+    "parent": 606,
+    "born": 189,
+    "cx": 2,
+    "hab": "ocean",
+    "look": {
+     "form": "blob",
+     "eyeN": 0,
+     "eyeKind": "none",
+     "eyeSize": 0,
+     "cover": "bare",
+     "limb": "none",
+     "limbN": 0,
+     "depth": "shallow",
+     "pattern": "stripes",
+     "asym": 0,
+     "joint": 0,
+     "drift": -4
+    },
+    "size": 0.00004377,
+    "sizeLabel": "目に見えない",
+    "sizeStep": 0,
+    "color": {
+     "hue": 196,
+     "light": 0.5
+    },
+    "traits": [
+     "しま"
+    ],
+    "place": "海の浅いところ",
+    "text": "真核の生き物、しま、海の浅いところ、目に見えない"
+   }
+  },
+  {
+   "key": "radial",
+   "label": "放射腕＋触手8本",
+   "from": "主役の惑星 #274",
+   "why": "試作07（生き物の視点）の3Dと同じ系統",
+   "render": "body",
+   "world": {
+    "star": "blue",
+    "gravity": 1.48,
+    "air": 1.58,
+    "T": 30.1
+   },
+   "entry": {
+    "id": 2388,
+    "parent": 2118,
+    "born": 237,
+    "cx": 4,
+    "hab": "ocean",
+    "look": {
+     "form": "radial",
+     "eyeN": 2,
+     "eyeKind": "lens",
+     "eyeSize": 0.3,
+     "cover": "scale",
+     "limb": "tentacle",
+     "limbN": 8,
+     "depth": "shallow",
+     "pattern": "spots",
+     "asym": 0,
+     "joint": 0,
+     "drift": -3
+    },
+    "size": 1.050475747,
+    "sizeLabel": "中くらい",
+    "sizeStep": 3,
+    "color": {
+     "hue": 197,
+     "light": 0.38
+    },
+    "traits": [
+     "放射腕",
+     "うろこ",
+     "レンズの目が2つ",
+     "触手が8本",
+     "斑点"
+    ],
+    "place": "海の浅いところ",
+    "text": "放射腕、うろこ、レンズの目が2つ、触手が8本、斑点、海の浅いところ、中くらい"
+   }
+  },
+  {
+   "key": "seg",
+   "label": "体節型・翼4本（文明の担い手）",
+   "from": "合成の惑星 shot-15 #1286",
+   "why": "段階4の「都市・崖の住まい」を建てている当事者",
+   "render": "body",
+   "world": {
+    "star": "yellow",
+    "gravity": 1.81,
+    "air": 1.83,
+    "T": 7.5
+   },
+   "entry": {
+    "id": 314,
+    "parent": 301,
+    "born": 961,
+    "cx": 5,
+    "hab": "land",
+    "look": {
+     "form": "seg",
+     "eyeN": 2,
+     "eyeKind": "lens",
+     "eyeSize": 0.3,
+     "cover": "scale",
+     "limb": "wing",
+     "limbN": 4,
+     "depth": "",
+     "pattern": "plain",
+     "asym": 0,
+     "joint": 0,
+     "drift": -7
+    },
+    "size": 2.291218989,
+    "sizeLabel": "大きい",
+    "sizeStep": 4,
+    "color": {
+     "hue": 83,
+     "light": 0.52
+    },
+    "traits": [
+     "体節型",
+     "うろこ",
+     "レンズの目が2つ",
+     "翼が4本"
+    ],
+    "place": "陸",
+    "text": "体節型、うろこ、レンズの目が2つ、翼が4本、陸、大きい"
+   },
+   "civ": {
+    "stage": "city",
+    "dwelling": "cliff",
+    "from": 1216,
+    "ruins": 3
+   }
+  }
+ ]
+}
